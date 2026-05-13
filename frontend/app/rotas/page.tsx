@@ -29,6 +29,12 @@ export default function Rotas() {
   const [notes, setNotes] = useState("");
   const [stops, setStops] = useState<StopForm[]>([emptyStop()]);
 
+  // Auto-soma paradas → receita total
+  useEffect(() => {
+    const sum = stops.reduce((acc, s) => acc + (parseFloat(s.value) || 0), 0);
+    if (sum > 0) setTotalRevenue(sum.toFixed(2));
+  }, [stops]);
+
   const load = () => api.get<Route[]>("/routes/").then(setRoutes);
   useEffect(() => {
     load();
@@ -48,23 +54,29 @@ export default function Rotas() {
   const openEdit = (r: Route) => {
     setEditing(r);
     setDate(r.date); setTruckId(String(r.truck_id)); setDriverId(String(r.driver_id));
-    setHelperIds(r.helpers.map(h => String(h.employee_id)));
-    setTotalKm(String(r.total_km)); setTotalRevenue(String(r.total_revenue)); setNotes(r.notes||"");
-    setStops(r.stops.length ? r.stops.map(s => ({ client_id: String(s.client_id||""), value: String(s.value), notes: s.notes||"" })) : [emptyStop()]);
+    // filter out invalid ids (undefined/NaN from old serialization bug)
+    setHelperIds(r.helpers.map(h => String(h.employee_id)).filter(id => id && id !== "undefined"));
+    setTotalKm(String(r.total_km)); setTotalRevenue(String(r.total_revenue)); setNotes(r.notes || "");
+    setStops(r.stops.length ? r.stops.map(s => ({ client_id: String(s.client_id || ""), value: String(s.value), notes: s.notes || "" })) : [emptyStop()]);
     setError(""); setOpen(true);
   };
 
   const save = async () => {
     setError("");
+    const validHelperIds = helperIds.filter(id => id && id !== "undefined" && !isNaN(Number(id)));
     const body = {
-      date, truck_id: +truckId, driver_id: +driverId,
+      date,
+      truck_id: +truckId,
+      driver_id: +driverId,
       total_km: totalKm ? +totalKm : 0,
       total_revenue: totalRevenue ? +totalRevenue : 0,
       notes: notes || undefined,
-      helper_ids: helperIds.filter(Boolean).map(Number),
+      helper_ids: validHelperIds.map(Number),
       stops: stops.filter(s => s.value || s.client_id).map((s, i) => ({
         client_id: s.client_id ? +s.client_id : undefined,
-        stop_order: i + 1, value: +s.value || 0, notes: s.notes || undefined,
+        stop_order: i + 1,
+        value: +s.value || 0,
+        notes: s.notes || undefined,
       })),
     };
     try {
@@ -82,6 +94,8 @@ export default function Rotas() {
   const toggleHelper = (id: string) => {
     setHelperIds(ids => ids.includes(id) ? ids.filter(i => i !== id) : [...ids, id]);
   };
+
+  const stopsSum = stops.reduce((acc, s) => acc + (parseFloat(s.value) || 0), 0);
 
   return (
     <div className="space-y-6">
@@ -191,7 +205,8 @@ export default function Rotas() {
                       </select>
                     </div>
                     <div className="w-28">
-                      <input type="number" placeholder="Valor (€)" value={s.value} onChange={e => setStops(ss => ss.map((x, j) => j === i ? { ...x, value: e.target.value } : x))}
+                      <input type="number" placeholder="Valor (€)" value={s.value}
+                        onChange={e => setStops(ss => ss.map((x, j) => j === i ? { ...x, value: e.target.value } : x))}
                         className="w-full bg-gray-800 border border-gray-700 rounded-lg px-2 py-1.5 text-xs text-gray-100" />
                     </div>
                     <button type="button" onClick={() => setStops(ss => ss.filter((_, j) => j !== i))} className="text-gray-500 hover:text-red-400 pb-1">
@@ -203,9 +218,11 @@ export default function Rotas() {
             </div>
 
             <div>
-              <label className="block text-xs text-gray-400 mb-1">Receita Total (€)</label>
+              <label className="block text-xs text-gray-400 mb-1">
+                Receita Total (€)
+                {stopsSum > 0 && <span className="ml-2 text-brand-400">soma automática: {fmt(stopsSum)}</span>}
+              </label>
               <input type="number" value={totalRevenue} onChange={e => setTotalRevenue(e.target.value)}
-                placeholder="Ou soma das paradas"
                 className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-brand-500" />
             </div>
 
