@@ -7,7 +7,10 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: res.statusText }));
-    throw new Error(err.detail || "Erro na requisição");
+    const detail = Array.isArray(err.detail)
+      ? err.detail.map((e: { loc: string[]; msg: string }) => `${e.loc?.join(".")}: ${e.msg}`).join(" | ")
+      : err.detail || `Erro ${res.status}`;
+    throw new Error(detail);
   }
   if (res.status === 204) return undefined as T;
   return res.json();
