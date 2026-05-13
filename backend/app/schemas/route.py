@@ -25,6 +25,14 @@ class RouteStopOut(RouteStopBase):
     model_config = {"from_attributes": True}
 
 
+class RouteHelperOut(BaseModel):
+    id: int
+    employee_id: int
+    employee: Optional[EmployeeOut] = None
+
+    model_config = {"from_attributes": True}
+
+
 class RouteBase(BaseModel):
     date: date
     truck_id: int
@@ -55,7 +63,7 @@ class RouteOut(RouteBase):
     created_at: datetime
     truck: Optional[TruckOut] = None
     driver: Optional[EmployeeOut] = None
-    helpers: List[dict] = []
+    helpers: List[RouteHelperOut] = []
     stops: List[RouteStopOut] = []
 
     model_config = {"from_attributes": True}
