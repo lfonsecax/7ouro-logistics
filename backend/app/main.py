@@ -1,5 +1,7 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from app.database import engine, Base
 import app.models  # noqa: F401 — garante que todos os models são registrados
 from app.routers import trucks, employees, clients, suppliers, routes, fuel, maintenance, dashboard
@@ -13,6 +15,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    print(f"[422] {request.method} {request.url.path} — {exc.errors()}")
+    return JSONResponse(status_code=422, content={"detail": exc.errors()})
 
 try:
     Base.metadata.create_all(bind=engine)

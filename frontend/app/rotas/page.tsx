@@ -63,27 +63,38 @@ export default function Rotas() {
 
   const save = async () => {
     setError("");
+    if (!date) { setError("Data é obrigatória"); return; }
+    if (!truckId) { setError("Selecione um caminhão"); return; }
+    if (!driverId) { setError("Selecione um motorista"); return; }
     const validHelperIds = helperIds.filter(id => id && id !== "undefined" && !isNaN(Number(id)));
+    const parsedKm = parseFloat(totalKm) || 0;
+    const parsedRevenue = parseFloat(totalRevenue) || 0;
     const body = {
       date,
       truck_id: +truckId,
       driver_id: +driverId,
-      total_km: totalKm ? +totalKm : 0,
-      total_revenue: totalRevenue ? +totalRevenue : 0,
+      total_km: parsedKm,
+      total_revenue: parsedRevenue,
       notes: notes || undefined,
       helper_ids: validHelperIds.map(Number),
-      stops: stops.filter(s => s.value || s.client_id).map((s, i) => ({
-        client_id: s.client_id ? +s.client_id : undefined,
-        stop_order: i + 1,
-        value: +s.value || 0,
-        notes: s.notes || undefined,
-      })),
+      stops: stops
+        .filter(s => s.value !== "" || s.client_id !== "")
+        .map((s, i) => ({
+          client_id: s.client_id ? +s.client_id : undefined,
+          stop_order: i + 1,
+          value: parseFloat(s.value) || 0,
+          notes: s.notes || undefined,
+        })),
     };
     try {
       if (editing) await api.put(`/routes/${editing.id}`, body);
       else await api.post("/routes/", body);
       setOpen(false); load();
-    } catch (e: unknown) { setError(e instanceof Error ? e.message : "Erro"); }
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Erro";
+      setError(msg);
+      console.error("Routes save error:", msg, "Body sent:", JSON.stringify(body));
+    }
   };
 
   const remove = async (id: number) => {

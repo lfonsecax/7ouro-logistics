@@ -38,19 +38,28 @@ export default function Manutencao() {
 
   const save = async () => {
     setError("");
+    if (!form.date) { setError("Data é obrigatória"); return; }
+    if (!form.truck_id) { setError("Selecione um caminhão"); return; }
+    if (!form.description.trim()) { setError("Descrição é obrigatória"); return; }
     const body = {
-      date: form.date, truck_id: +form.truck_id,
+      date: form.date,
+      truck_id: +form.truck_id,
       supplier_id: form.supplier_id ? +form.supplier_id : undefined,
-      type: form.type, description: form.description,
-      cost: form.cost ? +form.cost : 0,
-      odometer: form.odometer ? +form.odometer : undefined,
+      type: form.type,
+      description: form.description,
+      cost: parseFloat(form.cost) || 0,
+      odometer: form.odometer ? parseFloat(form.odometer) || undefined : undefined,
       notes: form.notes || undefined,
     };
     try {
       if (editing) await api.put(`/maintenance/${editing.id}`, body);
       else await api.post("/maintenance/", body);
       setOpen(false); load();
-    } catch (e: unknown) { setError(e instanceof Error ? e.message : "Erro"); }
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Erro";
+      setError(msg);
+      console.error("Maintenance save error:", msg, "Body sent:", JSON.stringify(body));
+    }
   };
 
   const remove = async (id: number) => {
