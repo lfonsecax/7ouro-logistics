@@ -1,14 +1,14 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Plus, Pencil, Trash2, PlusCircle, XCircle } from "lucide-react";
+import { Plus, Pencil, Trash2, PlusCircle, XCircle, Check } from "lucide-react";
 import Modal from "@/components/Modal";
 import { api } from "@/lib/api";
 import type { Route, Truck, Employee, Client } from "@/lib/types";
 
 const fmt = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "EUR" });
 
-interface StopForm { client_id: string; value: string; notes: string }
-const emptyStop = (): StopForm => ({ client_id: "", value: "", notes: "" });
+interface StopForm { client_id: string; value: string; notes: string; confirmed: boolean }
+const emptyStop = (): StopForm => ({ client_id: "", value: "", notes: "", confirmed: false });
 
 export default function Rotas() {
   const [routes, setRoutes] = useState<Route[]>([]);
@@ -29,10 +29,9 @@ export default function Rotas() {
   const [notes, setNotes] = useState("");
   const [stops, setStops] = useState<StopForm[]>([emptyStop()]);
 
-  // Auto-soma paradas → receita total
   useEffect(() => {
     const sum = stops.reduce((acc, s) => acc + (parseFloat(s.value) || 0), 0);
-    if (sum > 0) setTotalRevenue(sum.toFixed(2));
+    setTotalRevenue(sum > 0 ? sum.toFixed(2) : "");
   }, [stops]);
 
   const load = () => api.get<Route[]>("/routes/").then(setRoutes);
@@ -58,7 +57,7 @@ export default function Rotas() {
     setTotalKm(r.total_km != null ? String(r.total_km) : "");
     setTotalRevenue(r.total_revenue != null ? String(r.total_revenue) : "");
     setNotes(r.notes ?? "");
-    setStops(r.stops.length ? r.stops.map(s => ({ client_id: s.client_id != null ? String(s.client_id) : "", value: s.value != null ? String(s.value) : "", notes: s.notes ?? "" })) : [emptyStop()]);
+    setStops(r.stops.length ? r.stops.map(s => ({ client_id: s.client_id != null ? String(s.client_id) : "", value: s.value != null ? String(s.value) : "", notes: s.notes ?? "", confirmed: true })) : [emptyStop()]);
     setError(""); setOpen(true);
   };
 
@@ -217,10 +216,24 @@ export default function Rotas() {
                       </select>
                     </div>
                     <div className="w-28">
-                      <input type="number" placeholder="Valor (€)" value={s.value}
-                        onChange={e => setStops(ss => ss.map((x, j) => j === i ? { ...x, value: e.target.value } : x))}
-                        className="w-full bg-gray-800 border border-gray-700 rounded-lg px-2 py-1.5 text-xs text-gray-100" />
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        placeholder="Valor (€)"
+                        value={s.value}
+                        onChange={e => setStops(ss => ss.map((x, j) => j === i ? { ...x, value: e.target.value, confirmed: false } : x))}
+                        onBlur={() => setStops(ss => ss.map((x, j) => j === i ? { ...x, confirmed: !!x.value } : x))}
+                        className={`w-full bg-gray-800 border rounded-lg px-2 py-1.5 text-xs text-gray-100 ${s.confirmed && s.value ? "border-green-600" : "border-gray-700"}`}
+                      />
                     </div>
+                    <button
+                      type="button"
+                      title="Confirmar valor"
+                      onClick={() => setStops(ss => ss.map((x, j) => j === i ? { ...x, confirmed: true } : x))}
+                      className={`pb-1 transition-colors ${s.confirmed && s.value ? "text-green-400" : "text-gray-500 hover:text-green-400"}`}
+                    >
+                      <Check size={14} />
+                    </button>
                     <button type="button" onClick={() => setStops(ss => ss.filter((_, j) => j !== i))} className="text-gray-500 hover:text-red-400 pb-1">
                       <XCircle size={16} />
                     </button>
