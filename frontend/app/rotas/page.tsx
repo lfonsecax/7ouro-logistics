@@ -29,10 +29,6 @@ export default function Rotas() {
   const [notes, setNotes] = useState("");
   const [stops, setStops] = useState<StopForm[]>([emptyStop()]);
 
-  useEffect(() => {
-    const sum = stops.reduce((acc, s) => acc + (parseFloat(s.value) || 0), 0);
-    setTotalRevenue(sum > 0 ? sum.toFixed(2) : "");
-  }, [stops]);
 
   const load = () => api.get<Route[]>("/routes/").then(setRoutes);
   useEffect(() => {
@@ -240,13 +236,22 @@ export default function Rotas() {
                   </div>
                 ))}
               </div>
+              {stopsSum > 0 && (
+                <div className="flex items-center justify-between mt-2 px-1">
+                  <span className="text-xs text-gray-400">Total das paradas: <span className="text-green-400 font-medium">{fmt(stopsSum)}</span></span>
+                  <button
+                    type="button"
+                    onClick={() => setTotalRevenue(stopsSum.toFixed(2))}
+                    className="text-xs text-brand-400 hover:text-brand-300 flex items-center gap-1"
+                  >
+                    <Check size={12} /> Usar como receita
+                  </button>
+                </div>
+              )}
             </div>
 
             <div>
-              <label className="block text-xs text-gray-400 mb-1">
-                Receita Total (€)
-                {stopsSum > 0 && <span className="ml-2 text-brand-400">soma automática: {fmt(stopsSum)}</span>}
-              </label>
+              <label className="block text-xs text-gray-400 mb-1">Receita Total (€)</label>
               <input type="number" value={totalRevenue} onChange={e => setTotalRevenue(e.target.value)}
                 className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-brand-500" />
             </div>
