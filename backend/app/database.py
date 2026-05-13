@@ -11,7 +11,15 @@ class Settings(BaseSettings):
 
 settings = Settings()
 
-engine = create_engine(settings.database_url)
+# psycopg3 requires postgresql+psycopg:// prefix
+def _normalize_url(url: str) -> str:
+    if url.startswith("postgres://"):
+        return url.replace("postgres://", "postgresql+psycopg://", 1)
+    if url.startswith("postgresql://"):
+        return url.replace("postgresql://", "postgresql+psycopg://", 1)
+    return url
+
+engine = create_engine(_normalize_url(settings.database_url))
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
