@@ -4,7 +4,7 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    database_url: str
+    database_url: str = "postgresql://postgres:postgres@localhost:5432/7ouro"
 
     model_config = {"env_file": ".env", "extra": "ignore"}
 

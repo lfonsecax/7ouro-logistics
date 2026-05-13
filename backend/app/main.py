@@ -4,16 +4,20 @@ from app.database import engine, Base
 import app.models  # noqa: F401 — garante que todos os models são registrados
 from app.routers import trucks, employees, clients, suppliers, routes, fuel, maintenance, dashboard
 
-Base.metadata.create_all(bind=engine)
-
 app = FastAPI(title="7Ouro Logistics API", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+try:
+    Base.metadata.create_all(bind=engine)
+except Exception as e:
+    print(f"DB init warning: {e}")
 
 app.include_router(trucks.router)
 app.include_router(employees.router)
