@@ -43,7 +43,7 @@ export default function Dashboard() {
           <h1 className="text-2xl font-bold text-gray-100">Dashboard</h1>
           <p className="text-gray-400 text-sm mt-0.5">Visão geral da operação</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
           <select
             value={month}
             onChange={e => setMonth(+e.target.value)}
@@ -65,7 +65,7 @@ export default function Dashboard() {
         <p className="text-gray-500 text-sm">Carregando...</p>
       ) : kpis && (
         <>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <KPICard label="Receita" value={fmt(kpis.revenue)} color="green" />
             <KPICard label="Custo Total" value={fmt(kpis.total_cost)} color="red" />
             <KPICard
@@ -77,7 +77,7 @@ export default function Dashboard() {
             <KPICard label="KM Rodados" value={fmtN(kpis.total_km) + " km"} color="blue" />
           </div>
 
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <KPICard label="Combustível" value={fmt(kpis.fuel_cost)} sub={`${fmtN(kpis.fuel_liters)} L`} color="yellow" />
             <KPICard label="Manutenção" value={fmt(kpis.maintenance_cost)} color="yellow" />
             <KPICard label="Folha" value={fmt(kpis.salary_cost)} color="yellow" />
