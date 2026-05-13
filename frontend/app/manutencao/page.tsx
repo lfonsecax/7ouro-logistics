@@ -32,7 +32,16 @@ export default function Manutencao() {
   };
   const openEdit = (r: MaintenanceRecord) => {
     setEditing(r);
-    setForm({ date: r.date, truck_id: String(r.truck_id), supplier_id: String(r.supplier_id||""), type: r.type, description: r.description, cost: String(r.cost), odometer: String(r.odometer||""), notes: r.notes||"" });
+    setForm({
+      date: r.date ?? "",
+      truck_id: String(r.truck_id),
+      supplier_id: r.supplier_id != null ? String(r.supplier_id) : "",
+      type: r.type,
+      description: r.description ?? "",
+      cost: r.cost != null ? String(r.cost) : "",
+      odometer: r.odometer != null ? String(r.odometer) : "",
+      notes: r.notes ?? "",
+    });
     setError(""); setOpen(true);
   };
 

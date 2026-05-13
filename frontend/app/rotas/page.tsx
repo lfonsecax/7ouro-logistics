@@ -53,11 +53,12 @@ export default function Rotas() {
   const openCreate = () => { setEditing(null); resetForm(); setError(""); setOpen(true); };
   const openEdit = (r: Route) => {
     setEditing(r);
-    setDate(r.date); setTruckId(String(r.truck_id)); setDriverId(String(r.driver_id));
-    // filter out invalid ids (undefined/NaN from old serialization bug)
-    setHelperIds(r.helpers.map(h => String(h.employee_id)).filter(id => id && id !== "undefined"));
-    setTotalKm(String(r.total_km)); setTotalRevenue(String(r.total_revenue)); setNotes(r.notes || "");
-    setStops(r.stops.length ? r.stops.map(s => ({ client_id: String(s.client_id || ""), value: String(s.value), notes: s.notes || "" })) : [emptyStop()]);
+    setDate(r.date ?? ""); setTruckId(String(r.truck_id)); setDriverId(String(r.driver_id));
+    setHelperIds(r.helpers.map(h => String(h.employee_id)).filter(id => id && id !== "undefined" && !isNaN(Number(id))));
+    setTotalKm(r.total_km != null ? String(r.total_km) : "");
+    setTotalRevenue(r.total_revenue != null ? String(r.total_revenue) : "");
+    setNotes(r.notes ?? "");
+    setStops(r.stops.length ? r.stops.map(s => ({ client_id: s.client_id != null ? String(s.client_id) : "", value: s.value != null ? String(s.value) : "", notes: s.notes ?? "" })) : [emptyStop()]);
     setError(""); setOpen(true);
   };
 
