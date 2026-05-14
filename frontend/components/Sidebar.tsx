@@ -13,6 +13,7 @@ const mainNav = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/diario", label: "Diário de Bordo", icon: ClipboardList },
   { href: "/relatorios", label: "Relatórios", icon: FileText },
+  { href: "/faturas", label: "Faturas", icon: FileText },
 ];
 
 const dadosNav = [
@@ -23,7 +24,6 @@ const dadosNav = [
   { href: "/funcionarios", label: "Funcionários", icon: Users },
   { href: "/clientes", label: "Clientes", icon: Building2 },
   { href: "/fornecedores", label: "Fornecedores", icon: Package },
-  { href: "/faturas", label: "Faturas", icon: FileText },
 ];
 
 const dadosHrefs = dadosNav.map((d) => d.href);
