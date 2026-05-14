@@ -60,7 +60,7 @@ def get_route(route_id: int, db: Session = Depends(get_db)):
 
 @router.post("/", response_model=RouteOut, status_code=201)
 def create_route(data: RouteCreate, db: Session = Depends(get_db)):
-    route_data = data.model_dump(exclude={"helper_ids", "stops"})
+    route_data = data.model_dump(exclude={"helper_ids", "stops", "other_expenses"})
     route = Route(**route_data)
     db.add(route)
     db.flush()

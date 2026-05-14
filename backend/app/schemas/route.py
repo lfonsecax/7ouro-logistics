@@ -61,6 +61,7 @@ class RouteBase(BaseModel):
 class RouteCreate(RouteBase):
     helper_ids: List[int] = []
     stops: List[RouteStopCreate] = []
+    other_expenses: List[OtherExpenseCreate] = []
 
 
 class RouteUpdate(BaseModel):
