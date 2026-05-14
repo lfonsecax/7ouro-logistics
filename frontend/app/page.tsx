@@ -77,7 +77,17 @@ export default function Dashboard() {
             <KPICard label="KM Rodados" value={fmtN(kpis.total_km) + " km"} color="blue" />
           </div>
 
+          
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <KPICard label="Dias Parados" value={`${kpis.days_idle ?? 0} dias`} color="red"
+              sub={kpis.total_days ? `de ${kpis.total_days} dias` : undefined} />
+            <KPICard label="Ponto de Equilíbrio" value={fmt(kpis.breakeven)} color="orange"
+              sub="fature isso para nao ter prejuizo" />
+            <KPICard label="Outros Custos" value={fmt(kpis.total_cost - kpis.fuel_cost - kpis.maintenance_cost - kpis.salary_cost)} color="yellow" />
+            <KPICard label="Custo por KM" value={fmt(kpis.cost_per_km) + "/km"} color="blue" />
+          </div>
+
+<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <KPICard label="Combustível" value={fmt(kpis.fuel_cost)} sub={`${fmtN(kpis.fuel_liters)} L`} color="yellow" />
             <KPICard label="Manutenção" value={fmt(kpis.maintenance_cost)} color="yellow" />
             <KPICard label="Folha" value={fmt(kpis.salary_cost)} color="yellow" />

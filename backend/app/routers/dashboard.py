@@ -5,7 +5,7 @@ from datetime import date, datetime
 from typing import Optional
 from decimal import Decimal
 from app.database import get_db
-from app.models.route import Route
+from app.models.route import Route, OtherExpense
 from app.models.fuel import FuelRecord
 from app.models.maintenance import MaintenanceRecord
 from app.models.employee import Employee
@@ -35,6 +35,7 @@ def get_kpis(
         *period_filter(Route, Route.date)
     ).scalar() or Decimal("0")
 
+    other_costs = db.query(func.coalesce(func.sum(OtherExpense.amount), 0)).filter(OtherExpense.route_id == Route.id, Route.date.between(date_from, date_to)).scalar() or 0
     fuel_cost = db.query(func.coalesce(func.sum(FuelRecord.total), 0)).filter(
         *period_filter(FuelRecord, FuelRecord.date)
     ).scalar() or Decimal("0")

@@ -52,6 +52,19 @@ export interface Supplier {
   created_at: string;
 }
 
+export interface OtherExpense {
+  id: number;
+  description: string;
+  amount: number;
+  category: string;
+}
+
+export interface OtherExpenseCreate {
+  description: string;
+  amount: number;
+  category: string;
+}
+
 export interface RouteStop {
   id: number;
   client_id?: number;
@@ -79,6 +92,7 @@ export interface Route {
   notes?: string;
   helpers: RouteHelper[];
   stops: RouteStop[];
+  other_expenses: OtherExpense[];
   created_at: string;
 }
 
@@ -124,6 +138,9 @@ export interface DashboardKPIs {
   total_km: number;
   avg_consumption_km_per_liter: number;
   cost_per_km: number;
+  days_idle: number;
+  breakeven: number;
+  total_days: number;
   revenue_per_km: number;
   revenue_by_truck: { truck_id: number; plate: string; model: string; revenue: number; km: number }[];
 }

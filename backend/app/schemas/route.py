@@ -48,6 +48,7 @@ class RouteCreate(RouteBase):
 
 
 class RouteUpdate(BaseModel):
+    other_expenses: list[OtherExpenseCreate] | None = None
     date: Optional[date] = None
     truck_id: Optional[int] = None
     driver_id: Optional[int] = None

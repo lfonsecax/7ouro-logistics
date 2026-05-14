@@ -2,8 +2,8 @@
 import { useEffect, useState } from "react";
 import { Plus, Pencil, Trash2, PlusCircle, XCircle, Check } from "lucide-react";
 import Modal from "@/components/Modal";
-import { api } from "@/lib/api";
-import type { Route, Truck, Employee, Client } from "@/lib/types";
+import { api, BASE } from "@/lib/api";
+import type { Route, Truck, Employee, Client, OtherExpenseCreate } from "@/lib/types";
 
 const fmt = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "EUR" });
 
@@ -28,6 +28,10 @@ export default function Rotas() {
   const [totalRevenue, setTotalRevenue] = useState("");
   const [notes, setNotes] = useState("");
   const [stops, setStops] = useState<StopForm[]>([emptyStop()]);
+  const [expenses, setExpenses] = useState<OtherExpenseCreate[]>([]);
+  const [expDesc, setExpDesc] = useState("");
+  const [expAmount, setExpAmount] = useState("");
+  const [expCat, setExpCat] = useState("outros");
 
 
   const load = () => api.get<Route[]>("/routes/").then(setRoutes);
@@ -42,7 +46,7 @@ export default function Rotas() {
   const resetForm = () => {
     setDate(new Date().toISOString().slice(0, 10));
     setTruckId(""); setDriverId(""); setHelperIds([]); setTotalKm(""); setTotalRevenue(""); setNotes("");
-    setStops([emptyStop()]);
+    setStops([emptyStop()]); setExpenses([]);
   };
 
   const openCreate = () => { setEditing(null); resetForm(); setError(""); setOpen(true); };
@@ -98,6 +102,16 @@ export default function Rotas() {
     await api.delete(`/routes/${id}`); load();
   };
 
+  const addExpense = () => {
+    if (!expDesc || !expAmount) return;
+    setExpenses(e => [...e, { description: expDesc, amount: parseFloat(expAmount), category: expCat }]);
+    setExpDesc(""); setExpAmount("");
+  };
+
+  const removeExpense = (idx: number) => {
+    setExpenses(e => e.filter((_, i) => i !== idx));
+  };
+
   const toggleHelper = (id: string) => {
     setHelperIds(ids => ids.includes(id) ? ids.filter(i => i !== id) : [...ids, id]);
   };
@@ -136,7 +150,11 @@ export default function Rotas() {
                 <td className="px-4 py-3 text-right text-gray-300">{Number(r.total_km).toLocaleString()} km</td>
                 <td className="px-4 py-3 text-right font-semibold text-green-400">{fmt(Number(r.total_revenue))}</td>
                 <td className="px-4 py-3 flex gap-2 justify-end">
-                  <button onClick={() => openEdit(r)} className="text-gray-400 hover:text-brand-400"><Pencil size={15} /></button>
+                  <button onClick={() => openEdit(r)} className="text-gray-400 hover:text-brand-400"><a href={`${BASE}/routes/${r.id}/invoice`} target="_blank"
+  className="text-gray-400 hover:text-green-400" title="Fatura">
+  📄
+</a>
+                  <Pencil size={15} /></button>
                   <button onClick={() => remove(r.id)} className="text-gray-400 hover:text-red-400"><Trash2 size={15} /></button>
                 </td>
               </tr>
@@ -257,7 +275,39 @@ export default function Rotas() {
             </div>
 
             <div>
-              <label className="block text-xs text-gray-400 mb-1">Observações</label>
+              
+            <div>
+              <label className="block text-xs text-gray-400 mb-2">Outros Gastos</label>
+              <div className="flex gap-2 mb-2">
+                <input value={expDesc} onChange={e => setExpDesc(e.target.value)} placeholder="Descrição"
+                  className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-2 py-1.5 text-xs text-gray-100" />
+                <input type="number" value={expAmount} onChange={e => setExpAmount(e.target.value)} placeholder="€"
+                  className="w-20 bg-gray-800 border border-gray-700 rounded-lg px-2 py-1.5 text-xs text-gray-100" />
+                <select value={expCat} onChange={e => setExpCat(e.target.value)}
+                  className="bg-gray-800 border border-gray-700 rounded-lg px-2 py-1.5 text-xs text-gray-100">
+                  <option value="pedagio">Pedágio</option>
+                  <option value="seguro">Seguro</option>
+                  <option value="pneus">Pneus</option>
+                  <option value="ajudante">Ajudante</option>
+                  <option value="lavagem">Lavagem</option>
+                  <option value="outros">Outros</option>
+                </select>
+                <button type="button" onClick={addExpense} className="text-brand-400 hover:text-brand-300 text-xs">+</button>
+              </div>
+              {expenses.length > 0 && (
+                <div className="space-y-1">
+                  {expenses.map((e, i) => (
+                    <div key={i} className="flex items-center justify-between bg-gray-800 rounded px-2 py-1">
+                      <span className="text-xs text-gray-300">{e.description}</span>
+                      <span className="text-xs text-yellow-400">€{e.amount.toFixed(2)}</span>
+                      <button onClick={() => removeExpense(i)} className="text-red-400 text-xs">✕</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <label className="block text-xs text-gray-400 mb-1">Observações</label>
               <input value={notes} onChange={e => setNotes(e.target.value)}
                 className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-brand-500" />
             </div>

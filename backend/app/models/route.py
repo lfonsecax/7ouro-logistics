@@ -20,6 +20,7 @@ class Route(Base):
     driver = relationship("Employee", back_populates="driven_routes", foreign_keys=[driver_id])
     helpers = relationship("RouteHelper", back_populates="route", cascade="all, delete-orphan")
     stops = relationship("RouteStop", back_populates="route", cascade="all, delete-orphan", order_by="RouteStop.stop_order")
+    other_expenses = relationship("OtherExpense", back_populates="route", cascade="all, delete-orphan")
 
 
 class RouteHelper(Base):
@@ -32,6 +33,15 @@ class RouteHelper(Base):
     route = relationship("Route", back_populates="helpers")
     employee = relationship("Employee", back_populates="route_helpers")
 
+
+class OtherExpense(Base):
+    __tablename__ = "other_expenses"
+    id = Column(Integer, primary_key=True, index=True)
+    route_id = Column(Integer, ForeignKey("routes.id", ondelete="CASCADE"), nullable=False)
+    description = Column(String(200), nullable=False)
+    amount = Column(Numeric(10, 2), nullable=False, default=0)
+    category = Column(String(30), default="outros")
+    route = relationship("Route", back_populates="other_expenses")
 
 class RouteStop(Base):
     __tablename__ = "route_stops"
