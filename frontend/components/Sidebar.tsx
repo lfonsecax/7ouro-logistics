@@ -1,24 +1,31 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import {
   LayoutDashboard, Truck, Users, MapPin, Fuel,
-  Wrench, Building2, Package, ChevronRight, FileText, ClipboardList,
+  Wrench, Building2, Package, ChevronRight, ChevronDown,
+  FileText, ClipboardList, Settings2,
 } from "lucide-react";
 import clsx from "clsx";
 
-const nav = [
+const mainNav = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/diario", label: "Diário de Bordo", icon: ClipboardList },
+  { href: "/relatorios", label: "Relatórios", icon: FileText },
+];
+
+const dadosNav = [
   { href: "/rotas", label: "Rotas", icon: MapPin },
-  { href: "/diario", label: "Diario de Bordo", icon: ClipboardList },
   { href: "/abastecimento", label: "Abastecimento", icon: Fuel },
-  { href: "/manutencao", label: "Manutencao", icon: Wrench },
-  { href: "/caminhoes", label: "Caminhoes", icon: Truck },
-  { href: "/funcionarios", label: "Funcionarios", icon: Users },
+  { href: "/manutencao", label: "Manutenção", icon: Wrench },
+  { href: "/caminhoes", label: "Caminhões", icon: Truck },
+  { href: "/funcionarios", label: "Funcionários", icon: Users },
   { href: "/clientes", label: "Clientes", icon: Building2 },
   { href: "/fornecedores", label: "Fornecedores", icon: Package },
-  { href: "/relatorios", label: "Relatorios", icon: FileText },
 ];
+
+const dadosHrefs = dadosNav.map((d) => d.href);
 
 interface SidebarProps {
   isOpen: boolean;
@@ -27,6 +34,12 @@ interface SidebarProps {
 
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
+  const isDadosActive = dadosHrefs.includes(pathname);
+  const [dadosOpen, setDadosOpen] = useState(isDadosActive);
+
+  useEffect(() => {
+    if (isDadosActive) setDadosOpen(true);
+  }, [isDadosActive]);
 
   return (
     <>
@@ -45,19 +58,22 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           <span className="text-brand-500 font-bold text-xl tracking-tight">7Ouro</span>
           <span className="text-gray-400 text-sm ml-1">Logistics</span>
         </div>
-        <nav className="flex-1 px-3 py-4 space-y-1">
-          {nav.map(({ href, label, icon: Icon }) => {
+
+        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+          {/* Main navigation */}
+          {mainNav.map(({ href, label, icon: Icon }) => {
             const active = pathname === href;
             return (
               <Link
                 key={href}
                 href={href}
                 onClick={onClose}
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                className={clsx(
+                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
                   active
                     ? "bg-brand-600 text-white"
                     : "text-gray-400 hover:bg-gray-800 hover:text-gray-100"
-                }`}
+                )}
               >
                 <Icon size={16} />
                 {label}
@@ -65,7 +81,54 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
               </Link>
             );
           })}
+
+          {/* Separator */}
+          <div className="py-2">
+            <div className="border-t border-gray-800" />
+          </div>
+
+          {/* Dados accordion */}
+          <div>
+            <button
+              onClick={() => setDadosOpen(!dadosOpen)}
+              className={clsx(
+                "flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                isDadosActive
+                  ? "text-gray-200"
+                  : "text-gray-500 hover:text-gray-300 hover:bg-gray-800"
+              )}
+            >
+              <Settings2 size={16} />
+              <span className="flex-1 text-left">Dados</span>
+              {dadosOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+            </button>
+
+            {dadosOpen && (
+              <div className="ml-2 mt-1 space-y-0.5 pl-3 border-l border-gray-800">
+                {dadosNav.map(({ href, label, icon: Icon }) => {
+                  const active = pathname === href;
+                  return (
+                    <Link
+                      key={href}
+                      href={href}
+                      onClick={onClose}
+                      className={clsx(
+                        "flex items-center gap-3 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors",
+                        active
+                          ? "bg-gray-800 text-white"
+                          : "text-gray-500 hover:text-gray-300 hover:bg-gray-800/50"
+                      )}
+                    >
+                      <Icon size={14} />
+                      {label}
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </nav>
+
         <div className="px-6 py-4 text-xs text-gray-600 border-t border-gray-800">
           v1.0.0
         </div>
