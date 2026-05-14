@@ -155,6 +155,71 @@ IVA 21%: {iva:.2f} EUR<br>
     return Response(content=html, media_type="text/html")
 
 
+@router.get("/invoice/by-client")
+def invoice_by_client(client_id: int, date: date, db: Session = Depends(get_db)):
+    from fastapi.responses import Response
+    from app.models.client import Client as ClientModel
+
+    client = db.query(ClientModel).filter(ClientModel.id == client_id).first()
+    if not client:
+        raise HTTPException(status_code=404, detail="Cliente nao encontrado")
+
+    routes = (
+        db.query(Route)
+        .options(
+            joinedload(Route.truck),
+            joinedload(Route.driver),
+            joinedload(Route.helpers).joinedload(RouteHelper.employee),
+            joinedload(Route.stops).joinedload(RouteStop.client),
+            joinedload(Route.other_expenses),
+        )
+        .filter(Route.date == date)
+        .all()
+    )
+    # Filtrar rotas que têm uma parada com este cliente
+    client_routes = [r for r in routes if any(s.client_id == client_id for s in (r.stops or []))]
+    if not client_routes:
+        raise HTTPException(status_code=404, detail="Nenhuma rota encontrada para este cliente na data")
+
+    total_revenue = sum(float(r.total_revenue or 0) for r in client_routes)
+    total_km = sum(float(r.total_km or 0) for r in client_routes)
+    iva = round(total_revenue * 0.21, 2)
+    total = round(total_revenue + iva, 2)
+
+    rows = ""
+    for i, r in enumerate(client_routes, 1):
+        plate = r.truck.plate if r.truck else f"#{r.truck_id}"
+        driver = r.driver.name if r.driver else "N/D"
+        rev = float(r.total_revenue or 0)
+        km = float(r.total_km or 0)
+        rows += f"<tr><td>{i}</td><td>{plate}</td><td>{driver}</td><td style='text-align:right'>{km:.1f} km</td><td style='text-align:right'>{rev:.2f} EUR</td></tr>"
+
+    styles = """body { font-family: Arial; padding: 40px; max-width: 800px; margin: auto; color: #333; }
+h1 { color: #1a3c6e; border-bottom: 3px solid #1a3c6e; padding-bottom: 8px; }
+table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+th { background: #1a3c6e; color: white; padding: 10px; text-align: left; }
+td { padding: 8px; border-bottom: 1px solid #ddd; }
+tr:nth-child(even) { background: #f9f9f9; }
+.gtotal { font-size: 20px; font-weight: bold; color: #1a3c6e; }
+.foot { margin-top: 40px; font-size: 11px; color: #999; text-align: center; }"""
+
+    html = f"""<html><head><meta charset="utf-8"><title>Fatura - {client.name}</title><style>{styles}</style></head><body>
+<h1>FATURA</h1>
+<p><strong>7Ouro Logistics</strong><br>Manises, Valencia</p>
+<p><strong>Cliente:</strong> {client.name}<br>
+<strong>Data:</strong> {date}<br>
+<strong>Rotas no dia:</strong> {len(client_routes)}</p>
+<table><tr><th>#</th><th>Caminhao</th><th>Motorista</th><th>KM</th><th>Valor</th></tr>{rows}</table>
+<p style="text-align:right;margin-top:25px">
+Subtotal: {total_revenue:.2f} EUR<br>
+IVA 21%: {iva:.2f} EUR<br>
+<span class="gtotal">Total: {total:.2f} EUR</span></p>
+<p style="text-align:right;color:#666;font-size:13px">Total KM: {total_km:.1f} km | Rotas: {len(client_routes)}</p>
+<div class="foot">7Ouro Logistics — Gerado em {date.today().isoformat()}</div>
+</body></html>"""
+    return Response(content=html, media_type="text/html")
+
+
 @router.delete("/{route_id}", status_code=204)
 def delete_route(route_id: int, db: Session = Depends(get_db)):
     route = db.query(Route).filter(Route.id == route_id).first()

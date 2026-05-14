@@ -23,6 +23,7 @@ const dadosNav = [
   { href: "/funcionarios", label: "Funcionários", icon: Users },
   { href: "/clientes", label: "Clientes", icon: Building2 },
   { href: "/fornecedores", label: "Fornecedores", icon: Package },
+  { href: "/faturas", label: "Faturas", icon: FileText },
 ];
 
 const dadosHrefs = dadosNav.map((d) => d.href);
