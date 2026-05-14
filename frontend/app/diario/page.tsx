@@ -30,7 +30,9 @@ export default function DiarioBordo() {
   const [driverId, setDriverId] = useState("");
   const [km, setKm] = useState("");
   const [revenue, setRevenue] = useState("");
+  const [conceito, setConceito] = useState("");
   const [helperIds, setHelperIds] = useState<number[]>([]);
+  const [mealCost, setMealCost] = useState("");
 
   // Cliente (parada única simplificada)
   const [clientId, setClientId] = useState("");
@@ -86,7 +88,7 @@ export default function DiarioBordo() {
   }
 
   function clearForm() {
-    setTruckId(""); setDriverId(""); setKm(""); setRevenue(""); setHelperIds([]);
+    setTruckId(""); setDriverId(""); setKm(""); setRevenue(""); setConceito(""); setHelperIds([]); setMealCost("");
     setClientId(""); setFuelLiters(""); setFuelPrice(""); setFuelSupplier("");
     setMaintType("preventive"); setMaintDesc(""); setMaintCost("");
     setOtherExpenses([]);
@@ -99,9 +101,13 @@ export default function DiarioBordo() {
     setSaving(true); setMsg(null);
     try {
       // 1) Cria a rota
+      const selectedHelpers = allEmps.filter(h => helperIds.includes(h.id));
+      const helperCost = selectedHelpers.reduce((sum, h) => sum + (+(h.daily_rate ?? 0) || 0), 0);
       const routeData: any = {
         date, truck_id: +truckId, driver_id: +driverId,
         total_km: +km || 0, total_revenue: +revenue || 0,
+        helper_cost: helperCost, meal_cost: +mealCost || 0,
+        conceito: conceito || undefined,
         helper_ids: helperIds,
         stops: clientId ? [{ client_id: +clientId, stop_order: 1, value: +revenue || 0 }] : [],
       };
@@ -218,12 +224,27 @@ export default function DiarioBordo() {
           </div>
         </div>
 
+        {/* -- Conceito -- */}
+        <div>
+          <p className={l}>Conceito</p>
+          <input type="text" value={conceito} onChange={(e) => setConceito(e.target.value)}
+            className={s} placeholder="Ex: Transporte de mercadorias - Valencia a Madrid" />
+        </div>
+
+        {/* -- Alimentação -- */}
+        <div>
+          <p className={l}>Alimentação (€)</p>
+          <input type="number" value={mealCost} onChange={(e) => setMealCost(e.target.value)}
+            className={s} placeholder="0,00" step="0.1" min="0" />
+        </div>
+
         {/* -- Ajudantes -- */}
         <div>
           <p className={l}>Ajudantes</p>
           {allEmps.filter((e) => e.type === "helper").length === 0 ? (
             <p className="text-xs text-gray-500 mt-1">Nenhum ajudante registado</p>
           ) : (
+            <>
             <div className="flex flex-wrap gap-2 mt-1">
               {allEmps.filter((e) => e.type === "helper").map((h) => (
                 <button key={h.id} onClick={() => toggleHelper(h.id)}
@@ -232,10 +253,18 @@ export default function DiarioBordo() {
                       ? "bg-brand-600 border-brand-500 text-white"
                       : "bg-gray-800 border-gray-700 text-gray-300 hover:border-gray-600"
                   }`}>
-                  {h.name}
+                  {h.name} {h.daily_rate ? `(${h.daily_rate}€)` : ""}
                 </button>
               ))}
             </div>
+            {helperIds.length > 0 && (
+              <p className="text-xs text-gray-400 mt-2">
+                Custo ajudantes: <span className="text-yellow-400 font-medium">
+                  {allEmps.filter(h => helperIds.includes(h.id)).reduce((s, h) => s + (+(h.daily_rate ?? 0) || 0), 0).toFixed(2)}€
+                </span> ({helperIds.length} × diária)
+              </p>
+            )}
+            </>
           )}
         </div>
 
