@@ -65,6 +65,7 @@ export default function Dashboard() {
         <p className="text-gray-500 text-sm">Carregando...</p>
       ) : kpis && (
         <>
+          {/* Linha 1: Receita, Custos, Lucro, KM */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <KPICard label="Receita" value={fmt(kpis.revenue)} color="green" />
             <KPICard label="Custo Total" value={fmt(kpis.total_cost)} color="red" />
@@ -77,20 +78,21 @@ export default function Dashboard() {
             <KPICard label="KM Rodados" value={fmtN(kpis.total_km) + " km"} color="blue" />
           </div>
 
-          
+          {/* Linha 2: Dias Parados, Ponto Equilíbrio, Outros Custos, Custo/KM */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <KPICard label="Dias Parados" value={`${kpis.days_idle ?? 0} dias`} color="red"
               sub={kpis.total_days ? `de ${kpis.total_days} dias` : undefined} />
             <KPICard label="Ponto de Equilíbrio" value={fmt(kpis.breakeven)} color="orange"
               sub="fature isso para nao ter prejuizo" />
-            <KPICard label="Outros Custos" value={fmt(kpis.total_cost - kpis.fuel_cost - kpis.maintenance_cost - kpis.salary_cost)} color="yellow" />
+            <KPICard label="Outros Custos" value={fmt(kpis.other_costs)} color="yellow" />
             <KPICard label="Custo por KM" value={fmt(kpis.cost_per_km) + "/km"} color="blue" />
           </div>
 
-<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Linha 3: TODOS os custos separados */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <KPICard label="Combustível" value={fmt(kpis.fuel_cost)} sub={`${fmtN(kpis.fuel_liters)} L`} color="yellow" />
-            <KPICard label="Manutenção" value={fmt(kpis.maintenance_cost)} color="yellow" />
-            <KPICard label="Folha" value={fmt(kpis.salary_cost)} color="yellow" />
+            <KPICard label="Manutenção" value={fmt(kpis.maintenance_cost)} color="red" />
+            <KPICard label="Folha" value={fmt(kpis.salary_cost)} color="purple" />
             <KPICard
               label="Consumo Médio"
               value={fmtN(kpis.avg_consumption_km_per_liter) + " km/L"}
@@ -98,6 +100,13 @@ export default function Dashboard() {
             />
           </div>
 
+          {/* Linha 4: Ajudantes + Alimentação */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <KPICard label="Ajudantes" value={fmt(kpis.helper_cost)} color="orange" />
+            <KPICard label="Alimentação" value={fmt(kpis.meal_cost)} color="green" />
+          </div>
+
+          {/* Receita por caminhão */}
           {kpis.revenue_by_truck.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {kpis.revenue_by_truck.map(t => (
@@ -118,6 +127,7 @@ export default function Dashboard() {
             </div>
           )}
 
+          {/* Gráficos */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="bg-gray-900 rounded-xl border border-gray-800 p-5">
               <p className="text-sm font-semibold text-gray-200 mb-4">Receita vs Custos (6 meses)</p>
@@ -131,6 +141,9 @@ export default function Dashboard() {
                   <Bar dataKey="revenue" name="Receita" fill="#10b981" radius={[3,3,0,0]} />
                   <Bar dataKey="fuel_cost" name="Combustível" fill="#f59e0b" radius={[3,3,0,0]} />
                   <Bar dataKey="maintenance_cost" name="Manutenção" fill="#ef4444" radius={[3,3,0,0]} />
+                  <Bar dataKey="helper_cost" name="Ajudantes" fill="#F97316" radius={[3,3,0,0]} />
+                  <Bar dataKey="meal_cost" name="Alimentação" fill="#22c55e" radius={[3,3,0,0]} />
+                  <Bar dataKey="other_costs" name="Outros Custos" fill="#a855f7" radius={[3,3,0,0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>

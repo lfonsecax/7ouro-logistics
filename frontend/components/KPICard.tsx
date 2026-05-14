@@ -4,7 +4,7 @@ interface Props {
   label: string;
   value: string;
   sub?: string;
-  color?: "green" | "red" | "yellow" | "blue" | "orange" | "default";
+  color?: "green" | "red" | "yellow" | "blue" | "orange" | "purple" | "default";
 }
 
 const colors = {
@@ -13,6 +13,7 @@ const colors = {
   yellow: "border-brand-500 text-brand-400",
   blue: "border-blue-500 text-blue-400",
   orange: "border-orange-500 text-orange-400",
+  purple: "border-purple-500 text-purple-400",
   default: "border-gray-700 text-gray-100",
 };
 
