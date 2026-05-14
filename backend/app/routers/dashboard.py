@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from sqlalchemy import func, extract
+import calendar
 from datetime import date, datetime
 from typing import Optional
 from decimal import Decimal
@@ -35,7 +36,11 @@ def get_kpis(
         *period_filter(Route, Route.date)
     ).scalar() or Decimal("0")
 
-    other_costs = db.query(func.coalesce(func.sum(OtherExpense.amount), 0)).filter(OtherExpense.route_id == Route.id, Route.date.between(date_from, date_to)).scalar() or 0
+    other_costs = db.query(func.coalesce(func.sum(OtherExpense.amount), 0)).filter(
+        OtherExpense.route_id.in_(
+            db.query(Route.id).filter(*period_filter(Route, Route.date))
+        )
+    ).scalar() or Decimal("0")
     fuel_cost = db.query(func.coalesce(func.sum(FuelRecord.total), 0)).filter(
         *period_filter(FuelRecord, FuelRecord.date)
     ).scalar() or Decimal("0")
@@ -54,6 +59,18 @@ def get_kpis(
 
     total_cost = fuel_cost + maintenance_cost + total_salary
     profit = revenue - total_cost
+
+    total_days_in_period = calendar.monthrange(y, m)[1]
+    route_days = db.query(func.count(func.distinct(Route.date))).filter(
+        *period_filter(Route, Route.date)
+    ).scalar() or 0
+    days_idle = total_days_in_period - route_days
+
+    rev_per_km = float(revenue) / float(total_km) if total_km and float(total_km) > 0 else 0
+    var_cost_per_km = float(fuel_cost) / float(total_km) if total_km and float(total_km) > 0 else 0
+    fixed_costs = float(total_salary) + float(maintenance_cost)
+    margin_per_km = rev_per_km - var_cost_per_km
+    breakeven = fixed_costs / margin_per_km * rev_per_km if margin_per_km > 0 and rev_per_km > 0 else float(total_cost)
 
     avg_consumption = (
         float(total_km) / float(fuel_liters) if fuel_liters and float(fuel_liters) > 0 else 0
@@ -92,6 +109,9 @@ def get_kpis(
         "total_km": float(total_km),
         "avg_consumption_km_per_liter": round(avg_consumption, 2),
         "cost_per_km": round(cost_per_km, 2),
+        "days_idle": days_idle,
+        "total_days": total_days_in_period,
+        "breakeven": round(breakeven, 2),
         "revenue_per_km": round(revenue_per_km, 2),
         "revenue_by_truck": revenue_by_truck,
     }

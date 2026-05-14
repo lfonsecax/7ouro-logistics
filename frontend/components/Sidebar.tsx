@@ -3,13 +3,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Truck, Users, MapPin, Fuel,
-  Wrench, Building2, Package, ChevronRight, FileText,
+  Wrench, Building2, Package, ChevronRight, FileText, ClipboardList,
 } from "lucide-react";
 import clsx from "clsx";
 
 const nav = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/rotas", label: "Rotas", icon: MapPin },
+  { href: "/diario", label: "Diario de Bordo", icon: ClipboardList },
   { href: "/abastecimento", label: "Abastecimento", icon: Fuel },
   { href: "/manutencao", label: "Manutencao", icon: Wrench },
   { href: "/caminhoes", label: "Caminhoes", icon: Truck },

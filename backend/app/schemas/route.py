@@ -25,6 +25,22 @@ class RouteStopOut(RouteStopBase):
     model_config = {"from_attributes": True}
 
 
+class OtherExpenseCreate(BaseModel):
+    description: str
+    amount: Decimal
+    category: str = "outros"
+
+
+class OtherExpenseOut(BaseModel):
+    id: int
+    route_id: int
+    description: str
+    amount: Decimal
+    category: str
+
+    model_config = {"from_attributes": True}
+
+
 class RouteHelperOut(BaseModel):
     id: int
     employee_id: int
@@ -66,5 +82,6 @@ class RouteOut(RouteBase):
     driver: Optional[EmployeeOut] = None
     helpers: List[RouteHelperOut] = []
     stops: List[RouteStopOut] = []
+    other_expenses: List[OtherExpenseOut] = []
 
     model_config = {"from_attributes": True}
