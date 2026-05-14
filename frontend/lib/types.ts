@@ -133,12 +133,14 @@ export interface DashboardKPIs {
   fuel_liters: number;
   maintenance_cost: number;
   salary_cost: number;
+  other_costs: number;
   total_cost: number;
   profit: number;
   total_km: number;
   avg_consumption_km_per_liter: number;
   cost_per_km: number;
   days_idle: number;
+  days_worked: number;
   breakeven: number;
   total_days: number;
   revenue_per_km: number;

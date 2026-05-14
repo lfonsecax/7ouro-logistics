@@ -19,7 +19,10 @@ def _normalize_url(url: str) -> str:
         return url.replace("postgresql://", "postgresql+psycopg://", 1)
     return url
 
-engine = create_engine(_normalize_url(settings.database_url))
+engine = create_engine(
+    _normalize_url(settings.database_url),
+    connect_args={"prepare_threshold": None},
+)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 

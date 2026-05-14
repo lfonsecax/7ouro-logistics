@@ -100,10 +100,7 @@ def update_route(route_id: int, data: RouteUpdate, db: Session = Depends(get_db)
 
     if data.stops is not None:
         db.query(RouteStop).filter(RouteStop.route_id == route_id).delete()
-        for exp in data.other_expenses:
-        db.add(OtherExpense(route_id=route.id, description=exp.description, amount=exp.amount, category=exp.category))
-
-    for stop in data.stops:
+        for stop in data.stops:
             db.add(RouteStop(route_id=route_id, **stop.model_dump()))
 
     db.commit()
