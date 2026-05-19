@@ -5,6 +5,7 @@ from typing import Optional
 
 class ClientBase(BaseModel):
     name: str
+    cif: Optional[str] = None
     address: Optional[str] = None
     city: Optional[str] = None
     phone: Optional[str] = None
@@ -18,6 +19,7 @@ class ClientCreate(ClientBase):
 
 class ClientUpdate(BaseModel):
     name: Optional[str] = None
+    cif: Optional[str] = None
     address: Optional[str] = None
     city: Optional[str] = None
     phone: Optional[str] = None

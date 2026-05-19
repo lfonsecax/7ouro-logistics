@@ -20,6 +20,7 @@ class Employee(Base):
     cnh = Column(String(20))
     cnh_expiry = Column(Date)
     salary = Column(Numeric(10, 2), default=0)
+    daily_rate = Column(Numeric(10, 2), default=0)  # diária para ajudantes
     active = Column(Boolean, default=True)
     notes = Column(String(500))
     created_at = Column(DateTime(timezone=True), server_default=func.now())

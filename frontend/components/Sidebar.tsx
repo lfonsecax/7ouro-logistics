@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import {
   LayoutDashboard, Truck, Users, MapPin, Fuel,
   Wrench, Building2, Package, ChevronRight, ChevronDown,
-  FileText, ClipboardList, Settings2,
+  FileText, ClipboardList, Settings2, Settings,
 } from "lucide-react";
 import clsx from "clsx";
 
@@ -24,6 +24,7 @@ const dadosNav = [
   { href: "/funcionarios", label: "Funcionários", icon: Users },
   { href: "/clientes", label: "Clientes", icon: Building2 },
   { href: "/fornecedores", label: "Fornecedores", icon: Package },
+  { href: "/empresa", label: "Empresa", icon: Settings },
 ];
 
 const dadosHrefs = dadosNav.map((d) => d.href);

@@ -4,7 +4,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from app.database import engine, Base
 import app.models  # noqa: F401 — garante que todos os models são registrados
-from app.routers import trucks, employees, clients, suppliers, routes, fuel, maintenance, dashboard
+from app.routers import trucks, employees, clients, suppliers, routes, fuel, maintenance, dashboard, company
 
 app = FastAPI(title="7Ouro Logistics API", version="1.0.0")
 
@@ -34,6 +34,7 @@ app.include_router(routes.router)
 app.include_router(fuel.router)
 app.include_router(maintenance.router)
 app.include_router(dashboard.router)
+app.include_router(company.router)
 
 
 @app.get("/health")

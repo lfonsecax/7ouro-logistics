@@ -9,6 +9,7 @@ class Client(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(150), nullable=False)
+    cif = Column(String(50))  # NIF/CIF - identificação fiscal
     address = Column(String(300))
     city = Column(String(100))
     phone = Column(String(20))

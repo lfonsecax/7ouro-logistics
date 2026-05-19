@@ -5,7 +5,7 @@ import Modal from "@/components/Modal";
 import { api } from "@/lib/api";
 import type { Client } from "@/lib/types";
 
-const EMPTY = { name: "", address: "", city: "", phone: "", email: "", notes: "" };
+const EMPTY = { name: "", cif: "", address: "", city: "", phone: "", email: "", notes: "" };
 
 export default function Clientes() {
   const [clients, setClients] = useState<Client[]>([]);
@@ -20,7 +20,7 @@ export default function Clientes() {
   const openCreate = () => { setEditing(null); setForm(EMPTY); setError(""); setOpen(true); };
   const openEdit = (c: Client) => {
     setEditing(c);
-    setForm({ name: c.name, address: c.address||"", city: c.city||"", phone: c.phone||"", email: c.email||"", notes: c.notes||"" });
+    setForm({ name: c.name, cif: c.cif||"", address: c.address||"", city: c.city||"", phone: c.phone||"", email: c.email||"", notes: c.notes||"" });
     setError(""); setOpen(true);
   };
 
@@ -60,6 +60,7 @@ export default function Clientes() {
           <thead>
             <tr className="border-b border-gray-800 text-gray-400 text-xs uppercase">
               <th className="px-4 py-3 text-left">Nome</th>
+              <th className="px-4 py-3 text-left">CIF</th>
               <th className="px-4 py-3 text-left">Cidade</th>
               <th className="px-4 py-3 text-left">Telefone</th>
               <th className="px-4 py-3 text-left">Email</th>
@@ -70,6 +71,7 @@ export default function Clientes() {
             {clients.map(c => (
               <tr key={c.id} className="border-b border-gray-800 hover:bg-gray-800/50">
                 <td className="px-4 py-3 font-medium">{c.name}</td>
+                <td className="px-4 py-3 text-gray-400 font-mono text-xs">{c.cif || "—"}</td>
                 <td className="px-4 py-3 text-gray-400">{c.city || "—"}</td>
                 <td className="px-4 py-3 text-gray-400">{c.phone || "—"}</td>
                 <td className="px-4 py-3 text-gray-400">{c.email || "—"}</td>
@@ -80,7 +82,7 @@ export default function Clientes() {
               </tr>
             ))}
             {clients.length === 0 && (
-              <tr><td colSpan={5} className="px-4 py-8 text-center text-gray-500">Nenhum cliente cadastrado</td></tr>
+              <tr><td colSpan={6} className="px-4 py-8 text-center text-gray-500">Nenhum cliente cadastrado</td></tr>
             )}
           </tbody>
         </table>
@@ -90,6 +92,7 @@ export default function Clientes() {
         <Modal title={editing ? "Editar Cliente" : "Novo Cliente"} onClose={() => setOpen(false)}>
           <div className="space-y-3">
             {field("name", "Nome *")}
+            {field("cif", "CIF / NIF")}
             <div className="grid grid-cols-2 gap-3">
               {field("address", "Endereço")}
               {field("city", "Cidade")}

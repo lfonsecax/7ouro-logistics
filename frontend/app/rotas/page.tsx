@@ -26,13 +26,13 @@ export default function Rotas() {
   const [helperIds, setHelperIds] = useState<string[]>([]);
   const [totalKm, setTotalKm] = useState("");
   const [totalRevenue, setTotalRevenue] = useState("");
+  const [conceito, setConceito] = useState("");
   const [notes, setNotes] = useState("");
   const [stops, setStops] = useState<StopForm[]>([emptyStop()]);
   const [expenses, setExpenses] = useState<OtherExpenseCreate[]>([]);
   const [expDesc, setExpDesc] = useState("");
   const [expAmount, setExpAmount] = useState("");
   const [expCat, setExpCat] = useState("outros");
-
 
   const load = () => api.get<Route[]>("/routes/").then(setRoutes);
   useEffect(() => {
@@ -45,7 +45,7 @@ export default function Rotas() {
 
   const resetForm = () => {
     setDate(new Date().toISOString().slice(0, 10));
-    setTruckId(""); setDriverId(""); setHelperIds([]); setTotalKm(""); setTotalRevenue(""); setNotes("");
+    setTruckId(""); setDriverId(""); setHelperIds([]); setTotalKm(""); setTotalRevenue(""); setConceito(""); setNotes("");
     setStops([emptyStop()]); setExpenses([]);
   };
 
@@ -56,6 +56,7 @@ export default function Rotas() {
     setHelperIds(r.helpers.map(h => String(h.employee_id)).filter(id => id && id !== "undefined" && !isNaN(Number(id))));
     setTotalKm(r.total_km != null ? String(r.total_km) : "");
     setTotalRevenue(r.total_revenue != null ? String(r.total_revenue) : "");
+    setConceito(r.conceito ?? "");
     setNotes(r.notes ?? "");
     setStops(r.stops.length ? r.stops.map(s => ({ client_id: s.client_id != null ? String(s.client_id) : "", value: s.value != null ? String(s.value) : "", notes: s.notes ?? "", confirmed: true })) : [emptyStop()]);
     setError(""); setOpen(true);
@@ -70,21 +71,15 @@ export default function Rotas() {
     const parsedKm = parseFloat(totalKm) || 0;
     const parsedRevenue = parseFloat(totalRevenue) || 0;
     const body = {
-      date,
-      truck_id: +truckId,
-      driver_id: +driverId,
-      total_km: parsedKm,
-      total_revenue: parsedRevenue,
-      notes: notes || undefined,
+      date, truck_id: +truckId, driver_id: +driverId,
+      total_km: parsedKm, total_revenue: parsedRevenue,
+      conceito: conceito || undefined, notes: notes || undefined,
       helper_ids: validHelperIds.map(Number),
-      stops: stops
-        .filter(s => s.value !== "" || s.client_id !== "")
-        .map((s, i) => ({
-          client_id: s.client_id ? +s.client_id : undefined,
-          stop_order: i + 1,
-          value: parseFloat(s.value) || 0,
-          notes: s.notes || undefined,
-        })),
+      stops: stops.filter(s => s.value !== "" || s.client_id !== "").map((s, i) => ({
+        client_id: s.client_id ? +s.client_id : undefined,
+        stop_order: i + 1, value: parseFloat(s.value) || 0,
+        notes: s.notes || undefined,
+      })),
     };
     try {
       if (editing) await api.put(`/routes/${editing.id}`, body);
@@ -118,6 +113,9 @@ export default function Rotas() {
 
   const stopsSum = stops.reduce((acc, s) => acc + (parseFloat(s.value) || 0), 0);
 
+  const s = "w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-brand-500";
+  const sel = "w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100";
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -150,11 +148,10 @@ export default function Rotas() {
                 <td className="px-4 py-3 text-right text-gray-300">{Number(r.total_km).toLocaleString()} km</td>
                 <td className="px-4 py-3 text-right font-semibold text-green-400">{fmt(Number(r.total_revenue))}</td>
                 <td className="px-4 py-3 flex gap-2 justify-end">
-                  <button onClick={() => openEdit(r)} className="text-gray-400 hover:text-brand-400"><a href={`${BASE}/routes/${r.id}/invoice`} target="_blank"
-  className="text-gray-400 hover:text-green-400" title="Fatura">
-  📄
-</a>
-                  <Pencil size={15} /></button>
+                  <button onClick={() => openEdit(r)} className="text-gray-400 hover:text-brand-400">
+                    <a href={`${BASE}/routes/${r.id}/invoice`} target="_blank" className="text-gray-400 hover:text-green-400 mr-2" title="Fatura">📄</a>
+                    <Pencil size={15} />
+                  </button>
                   <button onClick={() => remove(r.id)} className="text-gray-400 hover:text-red-400"><Trash2 size={15} /></button>
                 </td>
               </tr>
@@ -172,29 +169,25 @@ export default function Rotas() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs text-gray-400 mb-1">Data *</label>
-                <input type="date" value={date} onChange={e => setDate(e.target.value)}
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-brand-500" />
+                <input type="date" value={date} onChange={e => setDate(e.target.value)} className={s} />
               </div>
               <div>
                 <label className="block text-xs text-gray-400 mb-1">Caminhão *</label>
-                <select value={truckId} onChange={e => setTruckId(e.target.value)}
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100">
+                <select value={truckId} onChange={e => setTruckId(e.target.value)} className={sel}>
                   <option value="">Selecionar</option>
                   {trucks.map(t => <option key={t.id} value={t.id}>{t.plate} — {t.model}</option>)}
                 </select>
               </div>
               <div>
                 <label className="block text-xs text-gray-400 mb-1">Motorista *</label>
-                <select value={driverId} onChange={e => setDriverId(e.target.value)}
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100">
+                <select value={driverId} onChange={e => setDriverId(e.target.value)} className={sel}>
                   <option value="">Selecionar</option>
                   {drivers.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                 </select>
               </div>
               <div>
                 <label className="block text-xs text-gray-400 mb-1">KM Rodados</label>
-                <input type="number" value={totalKm} onChange={e => setTotalKm(e.target.value)}
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-brand-500" />
+                <input type="number" value={totalKm} onChange={e => setTotalKm(e.target.value)} className={s} />
               </div>
             </div>
 
@@ -223,29 +216,20 @@ export default function Rotas() {
                 {stops.map((s, i) => (
                   <div key={i} className="flex gap-2 items-end">
                     <div className="flex-1">
-                      <select value={s.client_id} onChange={e => setStops(ss => ss.map((x, j) => j === i ? { ...x, client_id: e.target.value } : x))}
-                        className="w-full bg-gray-800 border border-gray-700 rounded-lg px-2 py-1.5 text-xs text-gray-100">
+                      <select value={s.client_id} onChange={e => setStops(ss => ss.map((x, j) => j === i ? { ...x, client_id: e.target.value } : x))} className={sel}>
                         <option value="">Cliente (opc.)</option>
                         {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                       </select>
                     </div>
                     <div className="w-28">
-                      <input
-                        type="text"
-                        inputMode="decimal"
-                        placeholder="Valor (€)"
-                        value={s.value}
+                      <input type="text" inputMode="decimal" placeholder="Valor (€)" value={s.value}
                         onChange={e => setStops(ss => ss.map((x, j) => j === i ? { ...x, value: e.target.value, confirmed: false } : x))}
                         onBlur={() => setStops(ss => ss.map((x, j) => j === i ? { ...x, confirmed: !!x.value } : x))}
-                        className={`w-full bg-gray-800 border rounded-lg px-2 py-1.5 text-xs text-gray-100 ${s.confirmed && s.value ? "border-green-600" : "border-gray-700"}`}
-                      />
+                        className={`w-full bg-gray-800 border rounded-lg px-2 py-1.5 text-xs text-gray-100 ${s.confirmed && s.value ? "border-green-600" : "border-gray-700"}`} />
                     </div>
-                    <button
-                      type="button"
-                      title="Confirmar valor"
+                    <button type="button" title="Confirmar valor"
                       onClick={() => setStops(ss => ss.map((x, j) => j === i ? { ...x, confirmed: true } : x))}
-                      className={`pb-1 transition-colors ${s.confirmed && s.value ? "text-green-400" : "text-gray-500 hover:text-green-400"}`}
-                    >
+                      className={`pb-1 transition-colors ${s.confirmed && s.value ? "text-green-400" : "text-gray-500 hover:text-green-400"}`}>
                       <Check size={14} />
                     </button>
                     <button type="button" onClick={() => setStops(ss => ss.filter((_, j) => j !== i))} className="text-gray-500 hover:text-red-400 pb-1">
@@ -257,11 +241,8 @@ export default function Rotas() {
               {stopsSum > 0 && (
                 <div className="flex items-center justify-between mt-2 px-1">
                   <span className="text-xs text-gray-400">Total das paradas: <span className="text-green-400 font-medium">{fmt(stopsSum)}</span></span>
-                  <button
-                    type="button"
-                    onClick={() => setTotalRevenue(stopsSum.toFixed(2))}
-                    className="text-xs text-brand-400 hover:text-brand-300 flex items-center gap-1"
-                  >
+                  <button type="button" onClick={() => setTotalRevenue(stopsSum.toFixed(2))}
+                    className="text-xs text-brand-400 hover:text-brand-300 flex items-center gap-1">
                     <Check size={12} /> Usar como receita
                   </button>
                 </div>
@@ -270,46 +251,49 @@ export default function Rotas() {
 
             <div>
               <label className="block text-xs text-gray-400 mb-1">Receita Total (€)</label>
-              <input type="number" value={totalRevenue} onChange={e => setTotalRevenue(e.target.value)}
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-brand-500" />
+              <input type="number" value={totalRevenue} onChange={e => setTotalRevenue(e.target.value)} className={s} />
             </div>
 
             <div>
-              
-            <div>
-              <label className="block text-xs text-gray-400 mb-2">Outros Gastos</label>
-              <div className="flex gap-2 mb-2">
-                <input value={expDesc} onChange={e => setExpDesc(e.target.value)} placeholder="Descrição"
-                  className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-2 py-1.5 text-xs text-gray-100" />
-                <input type="number" value={expAmount} onChange={e => setExpAmount(e.target.value)} placeholder="€"
-                  className="w-20 bg-gray-800 border border-gray-700 rounded-lg px-2 py-1.5 text-xs text-gray-100" />
-                <select value={expCat} onChange={e => setExpCat(e.target.value)}
-                  className="bg-gray-800 border border-gray-700 rounded-lg px-2 py-1.5 text-xs text-gray-100">
-                  <option value="pedagio">Pedágio</option>
-                  <option value="seguro">Seguro</option>
-                  <option value="pneus">Pneus</option>
-                  <option value="ajudante">Ajudante</option>
-                  <option value="lavagem">Lavagem</option>
-                  <option value="outros">Outros</option>
-                </select>
-                <button type="button" onClick={addExpense} className="text-brand-400 hover:text-brand-300 text-xs">+</button>
-              </div>
-              {expenses.length > 0 && (
-                <div className="space-y-1">
-                  {expenses.map((e, i) => (
-                    <div key={i} className="flex items-center justify-between bg-gray-800 rounded px-2 py-1">
-                      <span className="text-xs text-gray-300">{e.description}</span>
-                      <span className="text-xs text-yellow-400">€{e.amount.toFixed(2)}</span>
-                      <button onClick={() => removeExpense(i)} className="text-red-400 text-xs">✕</button>
-                    </div>
-                  ))}
+              <div>
+                <label className="block text-xs text-gray-400 mb-2">Outros Gastos</label>
+                <div className="flex gap-2 mb-2">
+                  <input value={expDesc} onChange={e => setExpDesc(e.target.value)} placeholder="Descrição" className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-2 py-1.5 text-xs text-gray-100" />
+                  <input type="number" value={expAmount} onChange={e => setExpAmount(e.target.value)} placeholder="€" className="w-20 bg-gray-800 border border-gray-700 rounded-lg px-2 py-1.5 text-xs text-gray-100" />
+                  <select value={expCat} onChange={e => setExpCat(e.target.value)} className="bg-gray-800 border border-gray-700 rounded-lg px-2 py-1.5 text-xs text-gray-100">
+                    <option value="pedagio">Pedágio</option>
+                    <option value="seguro">Seguro</option>
+                    <option value="pneus">Pneus</option>
+                    <option value="ajudante">Ajudante</option>
+                    <option value="lavagem">Lavagem</option>
+                    <option value="outros">Outros</option>
+                  </select>
+                  <button type="button" onClick={addExpense} className="text-brand-400 hover:text-brand-300 text-xs">+</button>
                 </div>
-              )}
-            </div>
+                {expenses.length > 0 && (
+                  <div className="space-y-1">
+                    {expenses.map((e, i) => (
+                      <div key={i} className="flex items-center justify-between bg-gray-800 rounded px-2 py-1">
+                        <span className="text-xs text-gray-300">{e.description}</span>
+                        <span className="text-xs text-yellow-400">€{e.amount.toFixed(2)}</span>
+                        <button onClick={() => removeExpense(i)} className="text-red-400 text-xs">✕</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
 
-            <label className="block text-xs text-gray-400 mb-1">Observações</label>
-              <input value={notes} onChange={e => setNotes(e.target.value)}
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-brand-500" />
+              <div className="mt-4">
+                <label className="block text-xs text-gray-400 mb-1">Conceito</label>
+                <input value={conceito} onChange={e => setConceito(e.target.value)}
+                  className={s} placeholder="Ex: Transporte Valencia-Madrid" />
+              </div>
+
+              <div className="mt-4">
+                <label className="block text-xs text-gray-400 mb-1">Observações</label>
+                <input value={notes} onChange={e => setNotes(e.target.value)}
+                  className={s} placeholder="Notas internas" />
+              </div>
             </div>
 
             {error && <p className="text-red-400 text-sm">{error}</p>}

@@ -53,11 +53,20 @@ def get_kpis(
         *period_filter(MaintenanceRecord, MaintenanceRecord.date)
     ).scalar() or Decimal("0")
 
-    total_salary = db.query(func.coalesce(func.sum(Employee.salary), 0)).filter(
-        Employee.active == True
+    helper_cost = db.query(func.coalesce(func.sum(Route.helper_cost), 0)).filter(
+        *period_filter(Route, Route.date)
     ).scalar() or Decimal("0")
 
-    total_cost = fuel_cost + maintenance_cost + total_salary
+    meal_cost = db.query(func.coalesce(func.sum(Route.meal_cost), 0)).filter(
+        *period_filter(Route, Route.date)
+    ).scalar() or Decimal("0")
+
+    total_salary = db.query(func.coalesce(func.sum(Employee.salary), 0)).filter(
+        Employee.active == True,
+        Employee.type == "driver"
+    ).scalar() or Decimal("0")
+
+    total_cost = fuel_cost + maintenance_cost + total_salary + other_costs + helper_cost + meal_cost
     profit = revenue - total_cost
 
     total_days_in_period = calendar.monthrange(y, m)[1]
@@ -103,6 +112,9 @@ def get_kpis(
         "fuel_cost": float(fuel_cost),
         "fuel_liters": float(fuel_liters),
         "maintenance_cost": float(maintenance_cost),
+        "helper_cost": float(helper_cost),
+        "meal_cost": float(meal_cost),
+        "other_costs": float(other_costs),
         "salary_cost": float(total_salary),
         "total_cost": float(total_cost),
         "profit": float(profit),
@@ -135,6 +147,13 @@ def get_evolution(months: int = 6, db: Session = Depends(get_db)):
         revenue = float(db.query(func.coalesce(func.sum(Route.total_revenue), 0)).filter(*pf(Route.date)).scalar() or 0)
         fuel = float(db.query(func.coalesce(func.sum(FuelRecord.total), 0)).filter(*pf(FuelRecord.date)).scalar() or 0)
         maint = float(db.query(func.coalesce(func.sum(MaintenanceRecord.cost), 0)).filter(*pf(MaintenanceRecord.date)).scalar() or 0)
+        helper = float(db.query(func.coalesce(func.sum(Route.helper_cost), 0)).filter(*pf(Route.date)).scalar() or 0)
+        meal = float(db.query(func.coalesce(func.sum(Route.meal_cost), 0)).filter(*pf(Route.date)).scalar() or 0)
+        other = float(db.query(func.coalesce(func.sum(OtherExpense.amount), 0)).filter(
+            OtherExpense.route_id.in_(
+                db.query(Route.id).filter(*pf(Route.date))
+            )
+        ).scalar() or 0)
         km = float(db.query(func.coalesce(func.sum(Route.total_km), 0)).filter(*pf(Route.date)).scalar() or 0)
 
         results.append({
@@ -142,6 +161,9 @@ def get_evolution(months: int = 6, db: Session = Depends(get_db)):
             "revenue": revenue,
             "fuel_cost": fuel,
             "maintenance_cost": maint,
+            "helper_cost": helper,
+            "meal_cost": meal,
+            "other_costs": other,
             "total_km": km,
         })
 

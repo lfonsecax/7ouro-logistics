@@ -55,6 +55,9 @@ class RouteBase(BaseModel):
     driver_id: int
     total_km: Optional[Decimal] = Decimal("0")
     total_revenue: Optional[Decimal] = Decimal("0")
+    helper_cost: Optional[Decimal] = Decimal("0")
+    meal_cost: Optional[Decimal] = Decimal("0")
+    conceito: Optional[str] = None
     notes: Optional[str] = None
 
 
@@ -71,6 +74,9 @@ class RouteUpdate(BaseModel):
     driver_id: Optional[int] = None
     total_km: Optional[Decimal] = None
     total_revenue: Optional[Decimal] = None
+    helper_cost: Optional[Decimal] = None
+    meal_cost: Optional[Decimal] = None
+    conceito: Optional[str] = None
     notes: Optional[str] = None
     helper_ids: Optional[List[int]] = None
     stops: Optional[List[RouteStopCreate]] = None

@@ -155,14 +155,36 @@ IVA 21%: {iva:.2f} EUR<br>
     return Response(content=html, media_type="text/html")
 
 
+def _fmt_date(d: date) -> str:
+    return f"{d.day:02d}-{d.month:02d}-{d.year}"
+
+
+def _next_invoice_number(db: Session) -> int:
+    from sqlalchemy import text as sa_text
+    result = db.execute(
+        sa_text("UPDATE invoice_sequence SET last_number = last_number + 1 WHERE id = 1 RETURNING last_number")
+    )
+    return result.scalar()
+
+
 @router.get("/invoice/by-client")
-def invoice_by_client(client_id: int, date: date, db: Session = Depends(get_db)):
+def invoice_by_client(
+    client_id: int,
+    date_from: date,
+    date_to: Optional[date] = None,
+    db: Session = Depends(get_db),
+):
     from fastapi.responses import Response
     from app.models.client import Client as ClientModel
+    from app.models.company import CompanyProfile
+    import datetime
 
     client = db.query(ClientModel).filter(ClientModel.id == client_id).first()
     if not client:
         raise HTTPException(status_code=404, detail="Cliente nao encontrado")
+
+    # Date range
+    end = date_to or date_from
 
     routes = (
         db.query(Route)
@@ -173,18 +195,24 @@ def invoice_by_client(client_id: int, date: date, db: Session = Depends(get_db))
             joinedload(Route.stops).joinedload(RouteStop.client),
             joinedload(Route.other_expenses),
         )
-        .filter(Route.date == date)
+        .filter(Route.date >= date_from, Route.date <= end)
+        .order_by(Route.date)
         .all()
     )
     # Filtrar rotas que têm uma parada com este cliente
     client_routes = [r for r in routes if any(s.client_id == client_id for s in (r.stops or []))]
     if not client_routes:
-        raise HTTPException(status_code=404, detail="Nenhuma rota encontrada para este cliente na data")
+        raise HTTPException(status_code=404, detail="Nenhuma rota encontrada para este cliente no período")
 
     total_revenue = sum(float(r.total_revenue or 0) for r in client_routes)
     total_km = sum(float(r.total_km or 0) for r in client_routes)
-    iva = round(total_revenue * 0.21, 2)
-    total = round(total_revenue + iva, 2)
+
+    # Buscar dados da empresa
+    company = db.query(CompanyProfile).filter(CompanyProfile.id == 1).first()
+
+    # Número sequencial
+    inv_num = _next_invoice_number(db)
+    db.commit()
 
     rows = ""
     for i, r in enumerate(client_routes, 1):
@@ -192,30 +220,76 @@ def invoice_by_client(client_id: int, date: date, db: Session = Depends(get_db))
         driver = r.driver.name if r.driver else "N/D"
         rev = float(r.total_revenue or 0)
         km = float(r.total_km or 0)
-        rows += f"<tr><td>{i}</td><td>{plate}</td><td>{driver}</td><td style='text-align:right'>{km:.1f} km</td><td style='text-align:right'>{rev:.2f} EUR</td></tr>"
+        conceito = r.conceito or f"Transporte - {plate}"
+        iva_row = round(rev * 0.21, 2)
+        total_row = round(rev + iva_row, 2)
+        rows += f"""<tr>
+  <td style='text-align:center'>{_fmt_date(r.date)}</td>
+  <td>{conceito}</td>
+  <td style='text-align:right'>{rev:.2f}</td>
+  <td style='text-align:right'>{iva_row:.2f}</td>
+  <td style='text-align:right'>{total_row:.2f}</td>
+</tr>"""
 
-    styles = """body { font-family: Arial; padding: 40px; max-width: 800px; margin: auto; color: #333; }
-h1 { color: #1a3c6e; border-bottom: 3px solid #1a3c6e; padding-bottom: 8px; }
-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-th { background: #1a3c6e; color: white; padding: 10px; text-align: left; }
+    styles = """body { font-family: Arial, sans-serif; padding: 40px; max-width: 900px; margin: auto; color: #333; }
+.header-empresa { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px; }
+.header-empresa .left h1 { color: #1a3c6e; margin: 0 0 4px 0; }
+.header-empresa .left p { margin: 0; font-size: 12px; color: #555; }
+.header-empresa .right { text-align: right; font-size: 12px; color: #555; }
+h2 { color: #1a3c6e; border-bottom: 3px solid #1a3c6e; padding-bottom: 8px; margin-top: 0; }
+table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; }
+th { background: #1a3c6e; color: white; padding: 10px 8px; text-align: left; font-size: 12px; }
 td { padding: 8px; border-bottom: 1px solid #ddd; }
 tr:nth-child(even) { background: #f9f9f9; }
-.gtotal { font-size: 20px; font-weight: bold; color: #1a3c6e; }
-.foot { margin-top: 40px; font-size: 11px; color: #999; text-align: center; }"""
+.resumo { margin-top: 25px; text-align: right; font-size: 14px; line-height: 1.8; }
+.gtotal { font-size: 22px; font-weight: bold; color: #1a3c6e; }
+.foot { margin-top: 50px; font-size: 11px; color: #999; text-align: center; border-top: 1px solid #ddd; padding-top: 15px; }
+.btn-print { display: block; width: 200px; margin: 20px auto; padding: 12px 0; background: #1a3c6e; color: white; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; text-align: center; }
+.btn-print:hover { background: #14305a; }
+@media print { .btn-print { display: none; } body { padding: 20px; } }"""
 
-    html = f"""<html><head><meta charset="utf-8"><title>Fatura - {client.name}</title><style>{styles}</style></head><body>
-<h1>FATURA</h1>
-<p><strong>7Ouro Logistics</strong><br>Manises, Valencia</p>
-<p><strong>Cliente:</strong> {client.name}<br>
-<strong>Data:</strong> {date}<br>
-<strong>Rotas no dia:</strong> {len(client_routes)}</p>
-<table><tr><th>#</th><th>Caminhao</th><th>Motorista</th><th>KM</th><th>Valor</th></tr>{rows}</table>
-<p style="text-align:right;margin-top:25px">
-Subtotal: {total_revenue:.2f} EUR<br>
-IVA 21%: {iva:.2f} EUR<br>
-<span class="gtotal">Total: {total:.2f} EUR</span></p>
-<p style="text-align:right;color:#666;font-size:13px">Total KM: {total_km:.1f} km | Rotas: {len(client_routes)}</p>
-<div class="foot">7Ouro Logistics — Gerado em {date.today().isoformat()}</div>
+    cname = company.name if company else "7Ouro Logistics"
+    caddr = company.address or ""
+    ccity = company.city or ""
+    czip = company.zip_code or ""
+    cvat = company.vat_id or ""
+    cphone = company.phone or ""
+    cemail = company.email or ""
+
+    iva_total = round(total_revenue * 0.21, 2)
+    grand_total = round(total_revenue + iva_total, 2)
+
+    html = f"""<html><head><meta charset="utf-8"><title>Fatura #{inv_num:04d} - {client.name}</title><style>{styles}</style></head><body>
+<button class="btn-print" onclick="window.print()">📄 Download PDF / Imprimir</button>
+<div class="header-empresa">
+  <div class="left">
+    <h1>{cname}</h1>
+    <p>{caddr}{', ' + ccity if ccity else ''}{' - ' + czip if czip else ''}</p>
+    <p>{'NIF: ' + cvat if cvat else ''}{' | Tel: ' + cphone if cphone else ''}{' | ' + cemail if cemail else ''}</p>
+  </div>
+  <div class="right">
+    <p><strong>FATURA</strong></p>
+    <p>Nº {inv_num:04d}</p>
+    <p>{_fmt_date(date_from)} a {_fmt_date(end)}</p>
+  </div>
+</div>
+
+<h2>Cliente: {client.name}{' | CIF: ' + client.cif if client.cif else ''}</h2>
+
+<table>
+  <tr><th>Dia</th><th>Conceito</th><th>Preço</th><th>IVA 21%</th><th>Total</th></tr>
+  {rows}
+</table>
+
+<div class="resumo">
+  <p>Subtotal: <strong>{total_revenue:.2f} EUR</strong></p>
+  <p>IVA 21%: {iva_total:.2f} EUR</p>
+  <p class="gtotal">Total: {grand_total:.2f} EUR</p>
+  <p style='color:#666;font-size:13px'>Total KM: {total_km:.1f} km | Rotas: {len(client_routes)}</p>
+</div>
+
+<div class="foot">{cname} — Gerado em {datetime.date.today().isoformat()}</div>
+<script>(function(){{ setTimeout(function(){{ document.querySelector('.btn-print')?.scrollIntoView({{ behavior:'smooth', block:'center' }}); }}, 100); }})();</script>
 </body></html>"""
     return Response(content=html, media_type="text/html")
 

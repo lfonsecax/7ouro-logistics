@@ -6,7 +6,7 @@ import { api } from "@/lib/api";
 import type { Employee } from "@/lib/types";
 
 const TYPE_LABEL = { driver: "Motorista", helper: "Ajudante" };
-const EMPTY = { name: "", type: "driver", phone: "", cnh: "", cnh_expiry: "", salary: "", active: "true", notes: "" };
+const EMPTY = { name: "", type: "driver", phone: "", cnh: "", cnh_expiry: "", salary: "", daily_rate: "", active: "true", notes: "" };
 
 const fmt = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "EUR" });
 
@@ -23,13 +23,13 @@ export default function Funcionarios() {
   const openCreate = () => { setEditing(null); setForm(EMPTY); setError(""); setOpen(true); };
   const openEdit = (e: Employee) => {
     setEditing(e);
-    setForm({ name: e.name, type: e.type, phone: e.phone||"", cnh: e.cnh||"", cnh_expiry: e.cnh_expiry||"", salary: String(e.salary||0), active: String(e.active), notes: e.notes||"" });
+    setForm({ name: e.name, type: e.type, phone: e.phone||"", cnh: e.cnh||"", cnh_expiry: e.cnh_expiry||"", salary: String(e.salary||0), daily_rate: String(e.daily_rate||0), active: String(e.active), notes: e.notes||"" });
     setError(""); setOpen(true);
   };
 
   const save = async () => {
     setError("");
-    const body = { ...form, salary: form.salary ? +form.salary : 0, active: form.active === "true", cnh_expiry: form.cnh_expiry || undefined };
+    const body = { ...form, salary: form.salary ? +form.salary : 0, daily_rate: form.daily_rate ? +form.daily_rate : 0, active: form.active === "true", cnh_expiry: form.cnh_expiry || undefined };
     try {
       if (editing) await api.put(`/employees/${editing.id}`, body);
       else await api.post("/employees/", body);
@@ -67,6 +67,7 @@ export default function Funcionarios() {
               <th className="px-4 py-3 text-left">Tipo</th>
               <th className="px-4 py-3 text-left">Telefone</th>
               <th className="px-4 py-3 text-left">Salário</th>
+              <th className="px-4 py-3 text-left">Diária</th>
               <th className="px-4 py-3 text-left">CNH Vence</th>
               <th className="px-4 py-3 text-left">Status</th>
               <th className="px-4 py-3" />
@@ -83,6 +84,7 @@ export default function Funcionarios() {
                 </td>
                 <td className="px-4 py-3 text-gray-400">{e.phone || "—"}</td>
                 <td className="px-4 py-3">{e.salary ? fmt(Number(e.salary)) : "—"}</td>
+                <td className="px-4 py-3">{e.type === "helper" && e.daily_rate ? fmt(Number(e.daily_rate)) + "/dia" : "—"}</td>
                 <td className="px-4 py-3 text-gray-400">{e.cnh_expiry ? new Date(e.cnh_expiry).toLocaleDateString("pt-BR") : "—"}</td>
                 <td className="px-4 py-3">
                   <span className={`px-2 py-0.5 rounded-full text-xs ${e.active ? "bg-green-900 text-green-300" : "bg-gray-700 text-gray-400"}`}>
@@ -96,7 +98,7 @@ export default function Funcionarios() {
               </tr>
             ))}
             {employees.length === 0 && (
-              <tr><td colSpan={7} className="px-4 py-8 text-center text-gray-500">Nenhum funcionário cadastrado</td></tr>
+              <tr><td colSpan={8} className="px-4 py-8 text-center text-gray-500">Nenhum funcionário cadastrado</td></tr>
             )}
           </tbody>
         </table>
@@ -116,7 +118,8 @@ export default function Funcionarios() {
                 </select>
               </div>
               {field("phone", "Telefone")}
-              {field("salary", "Salário", "number")}
+              {field("salary", "Salário (mês)", "number")}
+              {form.type === "helper" && field("daily_rate", "Diária (€)", "number")}
               {field("cnh", "CNH")}
               {field("cnh_expiry", "Vencimento CNH", "date")}
               <div>

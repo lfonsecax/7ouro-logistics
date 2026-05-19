@@ -13,7 +13,10 @@ class Route(Base):
     driver_id = Column(Integer, ForeignKey("employees.id"), nullable=False)
     total_km = Column(Numeric(10, 2), default=0)
     total_revenue = Column(Numeric(10, 2), default=0)
+    helper_cost = Column(Numeric(10, 2), default=0)
+    meal_cost = Column(Numeric(10, 2), default=0)
     notes = Column(String(500))
+    conceito = Column(String(300))  # descrição do serviço para a fatura
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     truck = relationship("Truck", back_populates="routes")

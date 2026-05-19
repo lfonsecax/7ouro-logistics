@@ -24,6 +24,7 @@ export interface Employee {
   cnh?: string;
   cnh_expiry?: string;
   salary?: number;
+  daily_rate?: number;
   active: boolean;
   notes?: string;
   created_at: string;
@@ -32,6 +33,7 @@ export interface Employee {
 export interface Client {
   id: number;
   name: string;
+  cif?: string;
   address?: string;
   city?: string;
   phone?: string;
@@ -89,6 +91,9 @@ export interface Route {
   driver?: Employee;
   total_km: number;
   total_revenue: number;
+  helper_cost: number;
+  meal_cost: number;
+  conceito?: string;
   notes?: string;
   helpers: RouteHelper[];
   stops: RouteStop[];
@@ -132,6 +137,9 @@ export interface DashboardKPIs {
   fuel_cost: number;
   fuel_liters: number;
   maintenance_cost: number;
+  helper_cost: number;
+  meal_cost: number;
+  other_costs: number;
   salary_cost: number;
   total_cost: number;
   profit: number;
@@ -150,5 +158,8 @@ export interface EvolutionPoint {
   revenue: number;
   fuel_cost: number;
   maintenance_cost: number;
+  helper_cost: number;
+  meal_cost: number;
+  other_costs: number;
   total_km: number;
 }

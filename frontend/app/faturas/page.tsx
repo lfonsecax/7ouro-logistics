@@ -3,13 +3,15 @@ import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { BASE } from "@/lib/api";
 import type { Client } from "@/lib/types";
-import { FileText, ExternalLink } from "lucide-react";
+import { FileText, ExternalLink, Calendar } from "lucide-react";
 
 export default function Faturas() {
   const today = new Date().toISOString().slice(0, 10);
+  const firstOfMonth = new Date().toISOString().slice(0, 7) + "-01";
   const [clients, setClients] = useState<Client[]>([]);
   const [clientId, setClientId] = useState("");
-  const [date, setDate] = useState(today);
+  const [dateFrom, setDateFrom] = useState(firstOfMonth);
+  const [dateTo, setDateTo] = useState(today);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -20,13 +22,15 @@ export default function Faturas() {
       .finally(() => setLoading(false));
   }, []);
 
-  const invoiceUrl = clientId ? `${BASE}/routes/invoice/by-client?client_id=${clientId}&date=${date}` : null;
+  const invoiceUrl = clientId
+    ? `${BASE}/routes/invoice/by-client?client_id=${clientId}&date_from=${dateFrom}&date_to=${dateTo}`
+    : null;
 
   return (
     <div className="max-w-xl mx-auto space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-100">Faturas</h1>
-        <p className="text-gray-400 text-sm mt-0.5">Gerar fatura por cliente e data</p>
+        <p className="text-gray-400 text-sm mt-0.5">Gerar fatura por cliente e período</p>
       </div>
 
       <div className="bg-gray-900 rounded-xl p-6 border border-gray-800 space-y-5">
@@ -45,21 +49,36 @@ export default function Faturas() {
             >
               <option value="">Selecionar cliente</option>
               {clients.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
+                <option key={c.id} value={c.id}>{c.name} {c.cif ? `(${c.cif})` : ""}</option>
               ))}
             </select>
           )}
         </div>
 
-        {/* Data */}
-        <div>
-          <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Data</p>
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className="bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-sm text-gray-100 w-full focus:outline-none focus:border-brand-500"
-          />
+        {/* Período */}
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <p className="text-xs text-gray-400 uppercase tracking-wider mb-1 flex items-center gap-1">
+              <Calendar size={12} /> De
+            </p>
+            <input
+              type="date"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+              className="bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-sm text-gray-100 w-full focus:outline-none focus:border-brand-500"
+            />
+          </div>
+          <div>
+            <p className="text-xs text-gray-400 uppercase tracking-wider mb-1 flex items-center gap-1">
+              <Calendar size={12} /> Até
+            </p>
+            <input
+              type="date"
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+              className="bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-sm text-gray-100 w-full focus:outline-none focus:border-brand-500"
+            />
+          </div>
         </div>
 
         {/* Botão */}
@@ -82,9 +101,10 @@ export default function Faturas() {
 
       {/* Preview info */}
       {clientId && (
-        <div className="bg-gray-900/50 rounded-xl p-4 border border-gray-800 text-sm text-gray-400">
-          <p>A fatura será gerada com todas as rotas do cliente selecionado na data escolhida.</p>
-          <p className="mt-1">Abre numa nova aba — podes imprimir ou salvar como PDF.</p>
+        <div className="bg-gray-900/50 rounded-xl p-4 border border-gray-800 text-sm text-gray-400 space-y-1">
+          <p>Fatura do período <strong>{new Date(dateFrom).toLocaleDateString("pt-BR")}</strong> a <strong>{new Date(dateTo).toLocaleDateString("pt-BR")}</strong>.</p>
+          <p>Abre numa nova aba — colunas: Dia, Conceito, Preço, IVA, Total.</p>
+          <p>Os dados da empresa (nome, NIF, morada) vêm do <strong>Perfil da Empresa</strong>.</p>
         </div>
       )}
 

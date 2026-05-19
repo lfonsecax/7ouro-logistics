@@ -12,6 +12,7 @@ class EmployeeBase(BaseModel):
     cnh: Optional[str] = None
     cnh_expiry: Optional[date] = None
     salary: Optional[Decimal] = Decimal("0")
+    daily_rate: Optional[Decimal] = Decimal("0")
     active: bool = True
     notes: Optional[str] = None
 
@@ -27,6 +28,7 @@ class EmployeeUpdate(BaseModel):
     cnh: Optional[str] = None
     cnh_expiry: Optional[date] = None
     salary: Optional[Decimal] = None
+    daily_rate: Optional[Decimal] = None
     active: Optional[bool] = None
     notes: Optional[str] = None
 

@@ -46,6 +46,9 @@ export default function Relatorios() {
   const totalRevenue = evolution.reduce((s, e) => s + e.revenue, 0);
   const totalFuel = evolution.reduce((s, e) => s + e.fuel_cost, 0);
   const totalMaint = evolution.reduce((s, e) => s + e.maintenance_cost, 0);
+  const totalHelper = evolution.reduce((s, e) => s + e.helper_cost, 0);
+  const totalMeal = evolution.reduce((s, e) => s + e.meal_cost, 0);
+  const totalOther = evolution.reduce((s, e) => s + e.other_costs, 0);
   const totalKm = evolution.reduce((s, e) => s + e.total_km, 0);
 
   return (
@@ -65,7 +68,7 @@ export default function Relatorios() {
       </div>
 
       {/* Resumo anual */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
         <div className="bg-gray-900 rounded-xl border-l-4 border-blue-500 p-5">
           <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">Receita Total</p>
           <p className="text-2xl font-bold text-blue-400 mt-1">{fmt(totalRevenue)}</p>
@@ -77,6 +80,14 @@ export default function Relatorios() {
         <div className="bg-gray-900 rounded-xl border-l-4 border-red-500 p-5">
           <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">Manutenção</p>
           <p className="text-2xl font-bold text-red-400 mt-1">{fmt(totalMaint)}</p>
+        </div>
+        <div className="bg-gray-900 rounded-xl border-l-4 border-purple-500 p-5">
+          <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">Outros Custos</p>
+          <p className="text-2xl font-bold text-purple-400 mt-1">{fmt(totalOther)}</p>
+        </div>
+        <div className="bg-gray-900 rounded-xl border-l-4 border-orange-500 p-5">
+          <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">Ajudantes</p>
+          <p className="text-2xl font-bold text-orange-400 mt-1">{fmt(totalHelper)}</p>
         </div>
         <div className="bg-gray-900 rounded-xl border-l-4 border-green-500 p-5">
           <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">KM Total</p>
@@ -100,6 +111,9 @@ export default function Relatorios() {
             <Bar dataKey="revenue" name="Receita" fill="#3B82F6" radius={[4, 4, 0, 0]} />
             <Bar dataKey="fuel_cost" name="Combustível" fill="#EAB308" radius={[4, 4, 0, 0]} />
             <Bar dataKey="maintenance_cost" name="Manutenção" fill="#EF4444" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="other_costs" name="Outros Custos" fill="#A855F7" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="helper_cost" name="Ajudantes" fill="#F97316" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="meal_cost" name="Alimentação" fill="#10B981" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -133,6 +147,9 @@ export default function Relatorios() {
                 <th className="text-right py-3 px-2">Receita</th>
                 <th className="text-right py-3 px-2">Combustível</th>
                 <th className="text-right py-3 px-2">Manutenção</th>
+                <th className="text-right py-3 px-2">Ajudantes</th>
+                <th className="text-right py-3 px-2">Aliment.</th>
+                <th className="text-right py-3 px-2">Outros</th>
                 <th className="text-right py-3 px-2">KM</th>
               </tr>
             </thead>
@@ -145,6 +162,9 @@ export default function Relatorios() {
                   <td className="py-3 px-2 text-right text-blue-400">{fmt(e.revenue)}</td>
                   <td className="py-3 px-2 text-right text-yellow-400">{fmt(e.fuel_cost)}</td>
                   <td className="py-3 px-2 text-right text-red-400">{fmt(e.maintenance_cost)}</td>
+                  <td className="py-3 px-2 text-right text-orange-400">{fmt(e.helper_cost)}</td>
+                  <td className="py-3 px-2 text-right text-green-400">{fmt(e.meal_cost)}</td>
+                  <td className="py-3 px-2 text-right text-purple-400">{fmt(e.other_costs)}</td>
                   <td className="py-3 px-2 text-right text-gray-100">{fmtN(e.total_km)} km</td>
                 </tr>
               ))}
