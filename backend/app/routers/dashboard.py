@@ -1,7 +1,7 @@
+import calendar
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from sqlalchemy import func, extract
-import calendar
 from datetime import date, datetime
 from typing import Optional
 from decimal import Decimal
@@ -25,40 +25,41 @@ def get_kpis(
     y = year or today.year
     m = month or today.month
 
-    def period_filter(model, date_col):
+    def period_filter(date_col):
         return [extract("year", date_col) == y, extract("month", date_col) == m]
 
     revenue = db.query(func.coalesce(func.sum(Route.total_revenue), 0)).filter(
-        *period_filter(Route, Route.date)
+        *period_filter(Route.date)
     ).scalar() or Decimal("0")
 
     total_km = db.query(func.coalesce(func.sum(Route.total_km), 0)).filter(
-        *period_filter(Route, Route.date)
+        *period_filter(Route.date)
     ).scalar() or Decimal("0")
 
     other_costs = db.query(func.coalesce(func.sum(OtherExpense.amount), 0)).filter(
         OtherExpense.route_id.in_(
-            db.query(Route.id).filter(*period_filter(Route, Route.date))
+            db.query(Route.id).filter(*period_filter(Route.date))
         )
     ).scalar() or Decimal("0")
+
     fuel_cost = db.query(func.coalesce(func.sum(FuelRecord.total), 0)).filter(
-        *period_filter(FuelRecord, FuelRecord.date)
+        *period_filter(FuelRecord.date)
     ).scalar() or Decimal("0")
 
     fuel_liters = db.query(func.coalesce(func.sum(FuelRecord.liters), 0)).filter(
-        *period_filter(FuelRecord, FuelRecord.date)
+        *period_filter(FuelRecord.date)
     ).scalar() or Decimal("0")
 
     maintenance_cost = db.query(func.coalesce(func.sum(MaintenanceRecord.cost), 0)).filter(
-        *period_filter(MaintenanceRecord, MaintenanceRecord.date)
+        *period_filter(MaintenanceRecord.date)
     ).scalar() or Decimal("0")
 
     helper_cost = db.query(func.coalesce(func.sum(Route.helper_cost), 0)).filter(
-        *period_filter(Route, Route.date)
+        *period_filter(Route.date)
     ).scalar() or Decimal("0")
 
     meal_cost = db.query(func.coalesce(func.sum(Route.meal_cost), 0)).filter(
-        *period_filter(Route, Route.date)
+        *period_filter(Route.date)
     ).scalar() or Decimal("0")
 
     total_salary = db.query(func.coalesce(func.sum(Employee.salary), 0)).filter(
@@ -71,9 +72,10 @@ def get_kpis(
 
     total_days_in_period = calendar.monthrange(y, m)[1]
     route_days = db.query(func.count(func.distinct(Route.date))).filter(
-        *period_filter(Route, Route.date)
+        *period_filter(Route.date)
     ).scalar() or 0
     days_idle = total_days_in_period - route_days
+    days_worked = route_days
 
     rev_per_km = float(revenue) / float(total_km) if total_km and float(total_km) > 0 else 0
     var_cost_per_km = float(fuel_cost) / float(total_km) if total_km and float(total_km) > 0 else 0
@@ -92,11 +94,11 @@ def get_kpis(
     for truck in trucks:
         truck_revenue = db.query(func.coalesce(func.sum(Route.total_revenue), 0)).filter(
             Route.truck_id == truck.id,
-            *period_filter(Route, Route.date)
+            *period_filter(Route.date)
         ).scalar() or 0
         truck_km = db.query(func.coalesce(func.sum(Route.total_km), 0)).filter(
             Route.truck_id == truck.id,
-            *period_filter(Route, Route.date)
+            *period_filter(Route.date)
         ).scalar() or 0
         revenue_by_truck.append({
             "truck_id": truck.id,
@@ -121,10 +123,11 @@ def get_kpis(
         "total_km": float(total_km),
         "avg_consumption_km_per_liter": round(avg_consumption, 2),
         "cost_per_km": round(cost_per_km, 2),
+        "revenue_per_km": round(revenue_per_km, 2),
         "days_idle": days_idle,
+        "days_worked": days_worked,
         "total_days": total_days_in_period,
         "breakeven": round(breakeven, 2),
-        "revenue_per_km": round(revenue_per_km, 2),
         "revenue_by_truck": revenue_by_truck,
     }
 

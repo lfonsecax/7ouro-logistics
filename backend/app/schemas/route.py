@@ -49,6 +49,18 @@ class RouteHelperOut(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class OtherExpenseCreate(BaseModel):
+    description: str
+    amount: Decimal = Decimal("0")
+    category: str = "outros"
+
+
+class OtherExpenseOut(OtherExpenseCreate):
+    id: int
+
+    model_config = {"from_attributes": True}
+
+
 class RouteBase(BaseModel):
     date: date
     truck_id: int
@@ -68,7 +80,7 @@ class RouteCreate(RouteBase):
 
 
 class RouteUpdate(BaseModel):
-    other_expenses: list[OtherExpenseCreate] | None = None
+    other_expenses: Optional[List[OtherExpenseCreate]] = None
     date: Optional[date] = None
     truck_id: Optional[int] = None
     driver_id: Optional[int] = None

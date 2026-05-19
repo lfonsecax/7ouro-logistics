@@ -1,210 +1,201 @@
 "use client";
 import { useEffect, useState } from "react";
-import { api } from "@/lib/api";
-import type { DashboardKPIs, EvolutionPoint } from "@/lib/types";
-import {
-  BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid,
-  Tooltip, Legend, ResponsiveContainer,
-} from "recharts";
+import { api, BASE } from "@/lib/api";
+import type { DashboardKPIs } from "@/lib/types";
 
-const MONTHS = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dev"];
+const MONTHS = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
 const fmt = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "EUR" });
 const fmtN = (n: number) => n.toLocaleString("pt-BR", { maximumFractionDigits: 1 });
+const pct = (val: number, total: number) => total > 0 ? ((val / total) * 100).toFixed(1) + "%" : "—";
 
 export default function Relatorios() {
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
+  const [month, setMonth] = useState(today.getMonth() + 1);
   const [kpis, setKpis] = useState<DashboardKPIs | null>(null);
-  const [evolution, setEvolution] = useState<EvolutionPoint[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
 
   useEffect(() => {
     setLoading(true);
-    setError("");
-    Promise.all([
-      api.get<DashboardKPIs>(`/dashboard/kpis?year=${year}&month=${today.getMonth() + 1}`),
-      api.get<EvolutionPoint[]>(`/dashboard/evolution?months=12`),
-    ])
-      .then(([k, e]) => {
-        setKpis(k);
-        setEvolution(e);
-      })
-      .catch((err: Error) => setError(err.message))
+    api.get<DashboardKPIs>(`/dashboard/kpis?year=${year}&month=${month}`)
+      .then(setKpis)
       .finally(() => setLoading(false));
-  }, [year]);
+  }, [year, month]);
 
-  if (loading) return <p className="text-gray-500 text-sm">Carregando...</p>;
-  if (error) return <p className="text-red-400 text-sm">Erro: {error}</p>;
-  if (!kpis) return <p className="text-gray-500 text-sm">Nenhum dado disponível</p>;
-
-  const evData = evolution.map(e => ({
-    ...e,
-    period: e.period.slice(5) + "/" + e.period.slice(2, 4),
-  }));
-
-  const totalRevenue = evolution.reduce((s, e) => s + e.revenue, 0);
-  const totalFuel = evolution.reduce((s, e) => s + e.fuel_cost, 0);
-  const totalMaint = evolution.reduce((s, e) => s + e.maintenance_cost, 0);
-  const totalHelper = evolution.reduce((s, e) => s + e.helper_cost, 0);
-  const totalMeal = evolution.reduce((s, e) => s + e.meal_cost, 0);
-  const totalOther = evolution.reduce((s, e) => s + e.other_costs, 0);
-  const totalKm = evolution.reduce((s, e) => s + e.total_km, 0);
+  const handleExportPDF = () => {
+    window.open(`${BASE}/relatorios/pdf?year=${year}&month=${month}`, "_blank");
+  };
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold text-gray-100">Relatórios</h1>
-          <p className="text-gray-400 text-sm mt-0.5">Visão consolidada da operação</p>
+          <p className="text-gray-400 text-sm mt-0.5">Resumo financeiro mensal</p>
         </div>
-        <select
-          value={year}
-          onChange={e => setYear(+e.target.value)}
-          className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100"
-        >
-          {[2024, 2025, 2026].map(y => <option key={y}>{y}</option>)}
-        </select>
-      </div>
-
-      {/* Resumo anual */}
-      <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
-        <div className="bg-gray-900 rounded-xl border-l-4 border-blue-500 p-5">
-          <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">Receita Total</p>
-          <p className="text-2xl font-bold text-blue-400 mt-1">{fmt(totalRevenue)}</p>
-        </div>
-        <div className="bg-gray-900 rounded-xl border-l-4 border-yellow-500 p-5">
-          <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">Combustível</p>
-          <p className="text-2xl font-bold text-yellow-400 mt-1">{fmt(totalFuel)}</p>
-        </div>
-        <div className="bg-gray-900 rounded-xl border-l-4 border-red-500 p-5">
-          <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">Manutenção</p>
-          <p className="text-2xl font-bold text-red-400 mt-1">{fmt(totalMaint)}</p>
-        </div>
-        <div className="bg-gray-900 rounded-xl border-l-4 border-purple-500 p-5">
-          <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">Outros Custos</p>
-          <p className="text-2xl font-bold text-purple-400 mt-1">{fmt(totalOther)}</p>
-        </div>
-        <div className="bg-gray-900 rounded-xl border-l-4 border-orange-500 p-5">
-          <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">Ajudantes</p>
-          <p className="text-2xl font-bold text-orange-400 mt-1">{fmt(totalHelper)}</p>
-        </div>
-        <div className="bg-gray-900 rounded-xl border-l-4 border-green-500 p-5">
-          <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">KM Total</p>
-          <p className="text-2xl font-bold text-green-400 mt-1">{fmtN(totalKm)} km</p>
+        <div className="flex items-center gap-2 flex-wrap">
+          <select
+            value={month}
+            onChange={e => setMonth(+e.target.value)}
+            className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100"
+          >
+            {MONTHS.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
+          </select>
+          <select
+            value={year}
+            onChange={e => setYear(+e.target.value)}
+            className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100"
+          >
+            {[2024, 2025, 2026].map(y => <option key={y}>{y}</option>)}
+          </select>
+          <button
+            onClick={handleExportPDF}
+            className="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-sm font-medium transition-colors"
+          >
+            Exportar PDF
+          </button>
         </div>
       </div>
 
-      {/* Gráfico Receita vs Custos */}
-      <div className="bg-gray-900 rounded-xl p-6">
-        <h2 className="text-lg font-semibold text-gray-100 mb-4">Receita vs Custos (12 meses)</h2>
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={evData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-            <XAxis dataKey="period" stroke="#9CA3AF" fontSize={12} />
-            <YAxis stroke="#9CA3AF" fontSize={12} />
-            <Tooltip
-              contentStyle={{ backgroundColor: "#1F2937", border: "1px solid #374151", borderRadius: 8 }}
-              labelStyle={{ color: "#F3F4F6" }}
-            />
-            <Legend />
-            <Bar dataKey="revenue" name="Receita" fill="#3B82F6" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="fuel_cost" name="Combustível" fill="#EAB308" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="maintenance_cost" name="Manutenção" fill="#EF4444" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="other_costs" name="Outros Custos" fill="#A855F7" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="helper_cost" name="Ajudantes" fill="#F97316" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="meal_cost" name="Alimentação" fill="#10B981" radius={[4, 4, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
+      {loading ? (
+        <p className="text-gray-500 text-sm">Carregando...</p>
+      ) : !kpis ? (
+        <p className="text-gray-500 text-sm">Erro ao carregar dados.</p>
+      ) : (
+        <>
+          {/* Resumo financeiro */}
+          <div className="bg-gray-900 rounded-xl border border-gray-800 p-5">
+            <h2 className="text-sm font-semibold text-gray-300 mb-4">
+              Resumo — {MONTHS[month - 1]}/{year}
+            </h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <Stat label="Receita" value={fmt(kpis.revenue)} color="text-green-400" />
+              <Stat label="Custo Total" value={fmt(kpis.total_cost)} color="text-red-400" />
+              <Stat
+                label="Resultado"
+                value={fmt(kpis.profit)}
+                color={kpis.profit >= 0 ? "text-green-400" : "text-red-400"}
+                sub={kpis.revenue > 0 ? pct(kpis.profit, kpis.revenue) + " margem" : undefined}
+              />
+              <Stat label="KM Rodados" value={fmtN(kpis.total_km) + " km"} color="text-blue-400" />
+            </div>
+          </div>
 
-      {/* KM mensal */}
-      <div className="bg-gray-900 rounded-xl p-6">
-        <h2 className="text-lg font-semibold text-gray-100 mb-4">KM Rodados (12 meses)</h2>
-        <ResponsiveContainer width="100%" height={250}>
-          <LineChart data={evData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-            <XAxis dataKey="period" stroke="#9CA3AF" fontSize={12} />
-            <YAxis stroke="#9CA3AF" fontSize={12} />
-            <Tooltip
-              contentStyle={{ backgroundColor: "#1F2937", border: "1px solid #374151", borderRadius: 8 }}
-              labelStyle={{ color: "#F3F4F6" }}
-            />
-            <Legend />
-            <Line type="monotone" dataKey="total_km" name="KM" stroke="#8B5CF6" strokeWidth={2} dot={{ r: 3 }} />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
-
-      {/* Tabela mensal */}
-      <div className="bg-gray-900 rounded-xl p-6">
-        <h2 className="text-lg font-semibold text-gray-100 mb-4">Detalhamento Mensal</h2>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-gray-400 border-b border-gray-700">
-                <th className="text-left py-3 px-2">Mês</th>
-                <th className="text-right py-3 px-2">Receita</th>
-                <th className="text-right py-3 px-2">Combustível</th>
-                <th className="text-right py-3 px-2">Manutenção</th>
-                <th className="text-right py-3 px-2">Ajudantes</th>
-                <th className="text-right py-3 px-2">Aliment.</th>
-                <th className="text-right py-3 px-2">Outros</th>
-                <th className="text-right py-3 px-2">KM</th>
-              </tr>
-            </thead>
-            <tbody>
-              {evolution.map(e => (
-                <tr key={e.period} className="border-b border-gray-800 hover:bg-gray-800/50">
-                  <td className="py-3 px-2 text-gray-100 font-medium">
-                    {e.period.slice(5)}/{e.period.slice(2, 4)}
-                  </td>
-                  <td className="py-3 px-2 text-right text-blue-400">{fmt(e.revenue)}</td>
-                  <td className="py-3 px-2 text-right text-yellow-400">{fmt(e.fuel_cost)}</td>
-                  <td className="py-3 px-2 text-right text-red-400">{fmt(e.maintenance_cost)}</td>
-                  <td className="py-3 px-2 text-right text-orange-400">{fmt(e.helper_cost)}</td>
-                  <td className="py-3 px-2 text-right text-green-400">{fmt(e.meal_cost)}</td>
-                  <td className="py-3 px-2 text-right text-purple-400">{fmt(e.other_costs)}</td>
-                  <td className="py-3 px-2 text-right text-gray-100">{fmtN(e.total_km)} km</td>
+          {/* Breakdown de custos */}
+          <div className="bg-gray-900 rounded-xl border border-gray-800 p-5">
+            <h2 className="text-sm font-semibold text-gray-300 mb-4">Detalhamento de Custos</h2>
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-gray-500 text-xs border-b border-gray-800">
+                  <th className="text-left pb-2">Categoria</th>
+                  <th className="text-right pb-2">Valor</th>
+                  <th className="text-right pb-2">% do custo total</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+              </thead>
+              <tbody className="divide-y divide-gray-800">
+                <CostRow label="Combustível" value={kpis.fuel_cost} total={kpis.total_cost} />
+                <CostRow label="Manutenção" value={kpis.maintenance_cost} total={kpis.total_cost} />
+                <CostRow label="Folha de Pagamento" value={kpis.salary_cost} total={kpis.total_cost} />
+                <CostRow label="Outros Gastos" value={kpis.other_costs ?? 0} total={kpis.total_cost} />
+                <tr className="font-semibold text-gray-200">
+                  <td className="py-2">Total</td>
+                  <td className="text-right py-2">{fmt(kpis.total_cost)}</td>
+                  <td className="text-right py-2">100%</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
 
-      {/* Indicadores do mês atual */}
-      <div className="bg-gray-900 rounded-xl p-6">
-        <h2 className="text-lg font-semibold text-gray-100 mb-4">Indicadores — {MONTHS[today.getMonth()]}/{year}</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div className="bg-gray-800 rounded-lg p-4">
-            <p className="text-xs text-gray-400">Custo por KM</p>
-            <p className="text-xl font-bold text-orange-400">{fmt(kpis.cost_per_km)}/km</p>
+          {/* Indicadores operacionais */}
+          <div className="bg-gray-900 rounded-xl border border-gray-800 p-5">
+            <h2 className="text-sm font-semibold text-gray-300 mb-4">Indicadores Operacionais</h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <Stat label="Custo por KM" value={fmt(kpis.cost_per_km) + "/km"} color="text-gray-100" />
+              <Stat label="Receita por KM" value={fmt(kpis.revenue_per_km) + "/km"} color="text-gray-100" />
+              <Stat label="Consumo Médio" value={fmtN(kpis.avg_consumption_km_per_liter) + " km/L"} color="text-gray-100" />
+              <Stat label="Combustível (litros)" value={fmtN(kpis.fuel_liters) + " L"} color="text-gray-100" />
+              <Stat label="Dias Trabalhados" value={`${kpis.days_worked ?? 0} / ${kpis.total_days}`} color="text-gray-100" />
+              <Stat label="Dias Parados" value={`${kpis.days_idle} dias`} color={kpis.days_idle > 10 ? "text-red-400" : "text-yellow-400"} />
+            </div>
           </div>
-          <div className="bg-gray-800 rounded-lg p-4">
-            <p className="text-xs text-gray-400">Consumo Médio</p>
-            <p className="text-xl font-bold text-blue-400">{fmtN(kpis.avg_consumption_km_per_liter)} km/L</p>
+
+          {/* Ponto de equilíbrio */}
+          <div className="bg-gray-900 rounded-xl border border-gray-800 p-5">
+            <h2 className="text-sm font-semibold text-gray-300 mb-2">Ponto de Equilíbrio</h2>
+            <p className="text-xs text-gray-500 mb-4">Receita mínima para cobrir todos os custos do mês</p>
+            <div className="flex items-center gap-6">
+              <div>
+                <p className="text-2xl font-bold text-orange-400">{fmt(kpis.breakeven)}</p>
+                <p className="text-xs text-gray-500 mt-1">necessário para não ter prejuízo</p>
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-green-400">{fmt(kpis.revenue)}</p>
+                <p className="text-xs text-gray-500 mt-1">receita realizada</p>
+              </div>
+              {kpis.revenue >= kpis.breakeven ? (
+                <span className="px-3 py-1 bg-green-900/40 text-green-400 rounded-full text-xs font-medium">Equilíbrio atingido</span>
+              ) : (
+                <span className="px-3 py-1 bg-red-900/40 text-red-400 rounded-full text-xs font-medium">
+                  Faltam {fmt(kpis.breakeven - kpis.revenue)}
+                </span>
+              )}
+            </div>
           </div>
-          <div className="bg-gray-800 rounded-lg p-4">
-            <p className="text-xs text-gray-400">Dias Parados</p>
-            <p className="text-xl font-bold text-red-400">{kpis.days_idle}/{kpis.total_days} dias</p>
-          </div>
-          <div className="bg-gray-800 rounded-lg p-4">
-            <p className="text-xs text-gray-400">Ponto de Equilíbrio</p>
-            <p className="text-xl font-bold text-orange-400">{fmt(kpis.breakeven)}</p>
-          </div>
-          <div className="bg-gray-800 rounded-lg p-4">
-            <p className="text-xs text-gray-400">Margem</p>
-            <p className={`text-xl font-bold ${kpis.profit >= 0 ? "text-green-400" : "text-red-400"}`}>
-              {kpis.revenue > 0 ? ((kpis.profit / kpis.revenue) * 100).toFixed(1) : "0.0"}%
-            </p>
-          </div>
-          <div className="bg-gray-800 rounded-lg p-4">
-            <p className="text-xs text-gray-400">Receita por KM</p>
-            <p className="text-xl font-bold text-green-400">{fmt(kpis.revenue_per_km)}/km</p>
-          </div>
-        </div>
-      </div>
+
+          {/* Por caminhão */}
+          {kpis.revenue_by_truck.length > 0 && (
+            <div className="bg-gray-900 rounded-xl border border-gray-800 p-5">
+              <h2 className="text-sm font-semibold text-gray-300 mb-4">Desempenho por Caminhão</h2>
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-gray-500 text-xs border-b border-gray-800">
+                    <th className="text-left pb-2">Caminhão</th>
+                    <th className="text-right pb-2">Receita</th>
+                    <th className="text-right pb-2">KM</th>
+                    <th className="text-right pb-2">% da Receita</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-800">
+                  {kpis.revenue_by_truck.map(t => (
+                    <tr key={t.truck_id} className="text-gray-300">
+                      <td className="py-2">
+                        <span className="font-medium">{t.plate}</span>
+                        <span className="text-gray-500 ml-1 text-xs">{t.model}</span>
+                      </td>
+                      <td className="text-right py-2 text-green-400">{fmt(t.revenue)}</td>
+                      <td className="text-right py-2 text-blue-400">{fmtN(t.km)} km</td>
+                      <td className="text-right py-2 text-gray-400">{pct(t.revenue, kpis.revenue)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }
+
+function Stat({ label, value, color, sub }: { label: string; value: string; color: string; sub?: string }) {
+  return (
+    <div>
+      <p className="text-xs text-gray-500">{label}</p>
+      <p className={`text-lg font-bold mt-0.5 ${color}`}>{value}</p>
+      {sub && <p className="text-xs text-gray-500 mt-0.5">{sub}</p>}
+    </div>
+  );
+}
+
+function CostRow({ label, value, total }: { label: string; value: number; total: number }) {
+  return (
+    <tr className="text-gray-300">
+      <td className="py-2">{label}</td>
+      <td className="text-right py-2">{fmt(value)}</td>
+      <td className="text-right py-2 text-gray-400">{pct(value, total)}</td>
+    </tr>
+  );
+}
+
+
+
