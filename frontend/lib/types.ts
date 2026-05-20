@@ -141,7 +141,6 @@ export interface DashboardKPIs {
   meal_cost: number;
   other_costs: number;
   salary_cost: number;
-  other_costs: number;
   total_cost: number;
   profit: number;
   total_km: number;
