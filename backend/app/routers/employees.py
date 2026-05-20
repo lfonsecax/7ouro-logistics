@@ -8,7 +8,7 @@ from app.schemas.employee import EmployeeCreate, EmployeeUpdate, EmployeeOut
 router = APIRouter(prefix="/employees", tags=["employees"])
 
 
-@router.get("/", response_model=List[EmployeeOut])
+@router.get("", response_model=List[EmployeeOut])
 def list_employees(type: Optional[EmployeeType] = None, active: Optional[bool] = None, db: Session = Depends(get_db)):
     q = db.query(Employee)
     if type:
@@ -26,7 +26,7 @@ def get_employee(employee_id: int, db: Session = Depends(get_db)):
     return emp
 
 
-@router.post("/", response_model=EmployeeOut, status_code=201)
+@router.post("", response_model=EmployeeOut, status_code=201)
 def create_employee(data: EmployeeCreate, db: Session = Depends(get_db)):
     emp = Employee(**data.model_dump())
     db.add(emp)

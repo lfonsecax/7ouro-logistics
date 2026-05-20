@@ -8,7 +8,7 @@ from app.schemas.client import ClientCreate, ClientUpdate, ClientOut
 router = APIRouter(prefix="/clients", tags=["clients"])
 
 
-@router.get("/", response_model=List[ClientOut])
+@router.get("", response_model=List[ClientOut])
 def list_clients(db: Session = Depends(get_db)):
     return db.query(Client).order_by(Client.name).all()
 
@@ -21,7 +21,7 @@ def get_client(client_id: int, db: Session = Depends(get_db)):
     return client
 
 
-@router.post("/", response_model=ClientOut, status_code=201)
+@router.post("", response_model=ClientOut, status_code=201)
 def create_client(data: ClientCreate, db: Session = Depends(get_db)):
     client = Client(**data.model_dump())
     db.add(client)

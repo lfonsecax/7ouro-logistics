@@ -9,7 +9,7 @@ from app.schemas.maintenance import MaintenanceRecordCreate, MaintenanceRecordUp
 router = APIRouter(prefix="/maintenance", tags=["maintenance"])
 
 
-@router.get("/", response_model=List[MaintenanceRecordOut])
+@router.get("", response_model=List[MaintenanceRecordOut])
 def list_maintenance(
     truck_id: Optional[int] = None,
     type: Optional[MaintenanceType] = None,
@@ -42,7 +42,7 @@ def get_maintenance(record_id: int, db: Session = Depends(get_db)):
     return record
 
 
-@router.post("/", response_model=MaintenanceRecordOut, status_code=201)
+@router.post("", response_model=MaintenanceRecordOut, status_code=201)
 def create_maintenance(data: MaintenanceRecordCreate, db: Session = Depends(get_db)):
     record = MaintenanceRecord(**data.model_dump())
     db.add(record)

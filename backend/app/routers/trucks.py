@@ -8,7 +8,7 @@ from app.schemas.truck import TruckCreate, TruckUpdate, TruckOut
 router = APIRouter(prefix="/trucks", tags=["trucks"])
 
 
-@router.get("/", response_model=List[TruckOut])
+@router.get("", response_model=List[TruckOut])
 def list_trucks(db: Session = Depends(get_db)):
     return db.query(Truck).order_by(Truck.plate).all()
 
@@ -21,7 +21,7 @@ def get_truck(truck_id: int, db: Session = Depends(get_db)):
     return truck
 
 
-@router.post("/", response_model=TruckOut, status_code=201)
+@router.post("", response_model=TruckOut, status_code=201)
 def create_truck(data: TruckCreate, db: Session = Depends(get_db)):
     existing = db.query(Truck).filter(Truck.plate == data.plate).first()
     if existing:

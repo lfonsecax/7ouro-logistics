@@ -24,7 +24,7 @@ def _load_route(db: Session, route_id: int) -> Route:
     )
 
 
-@router.get("/", response_model=List[RouteOut])
+@router.get("", response_model=List[RouteOut])
 def list_routes(
     truck_id: Optional[int] = None,
     driver_id: Optional[int] = None,
@@ -58,7 +58,7 @@ def get_route(route_id: int, db: Session = Depends(get_db)):
     return route
 
 
-@router.post("/", response_model=RouteOut, status_code=201)
+@router.post("", response_model=RouteOut, status_code=201)
 def create_route(data: RouteCreate, db: Session = Depends(get_db)):
     route_data = data.model_dump(exclude={"helper_ids", "stops", "other_expenses"})
     route = Route(**route_data)

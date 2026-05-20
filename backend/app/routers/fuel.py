@@ -9,7 +9,7 @@ from app.schemas.fuel import FuelRecordCreate, FuelRecordUpdate, FuelRecordOut
 router = APIRouter(prefix="/fuel", tags=["fuel"])
 
 
-@router.get("/", response_model=List[FuelRecordOut])
+@router.get("", response_model=List[FuelRecordOut])
 def list_fuel(
     truck_id: Optional[int] = None,
     date_from: Optional[date] = None,
@@ -39,7 +39,7 @@ def get_fuel(record_id: int, db: Session = Depends(get_db)):
     return record
 
 
-@router.post("/", response_model=FuelRecordOut, status_code=201)
+@router.post("", response_model=FuelRecordOut, status_code=201)
 def create_fuel(data: FuelRecordCreate, db: Session = Depends(get_db)):
     record = FuelRecord(**data.model_dump())
     db.add(record)

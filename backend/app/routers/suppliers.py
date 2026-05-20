@@ -8,7 +8,7 @@ from app.schemas.supplier import SupplierCreate, SupplierUpdate, SupplierOut
 router = APIRouter(prefix="/suppliers", tags=["suppliers"])
 
 
-@router.get("/", response_model=List[SupplierOut])
+@router.get("", response_model=List[SupplierOut])
 def list_suppliers(type: Optional[SupplierType] = None, db: Session = Depends(get_db)):
     q = db.query(Supplier)
     if type:
@@ -24,7 +24,7 @@ def get_supplier(supplier_id: int, db: Session = Depends(get_db)):
     return supplier
 
 
-@router.post("/", response_model=SupplierOut, status_code=201)
+@router.post("", response_model=SupplierOut, status_code=201)
 def create_supplier(data: SupplierCreate, db: Session = Depends(get_db)):
     supplier = Supplier(**data.model_dump())
     db.add(supplier)
