@@ -1,7 +1,5 @@
 {
-  "trailingSlash": true,
   "rewrites": [
-    { "source": "/api/:path*/", "destination": "https://7ouro.whymeapp.io/:path*/" },
     { "source": "/api/:path*", "destination": "https://7ouro.whymeapp.io/:path*" }
   ]
 }
