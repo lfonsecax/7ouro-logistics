@@ -1,5 +1,5 @@
 {
   "rewrites": [
-    { "source": "/api/:path*", "destination": "http://188.68.60.231:8002/:path*" }
+    { "source": "/api/:path*", "destination": "https://7ouro.whymeapp.io/:path*" }
   ]
 }
