@@ -30,7 +30,7 @@ export default function Fornecedores() {
     setError("");
     try {
       if (editing) await api.put(`/suppliers/${editing.id}`, form);
-      else await api.post("/suppliers/", form);
+      else await api.post("/suppliers", form);
       setOpen(false); load();
     } catch (e: unknown) { setError(e instanceof Error ? e.message : "Erro"); }
   };

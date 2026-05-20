@@ -28,7 +28,7 @@ export default function Clientes() {
     setError("");
     try {
       if (editing) await api.put(`/clients/${editing.id}`, form);
-      else await api.post("/clients/", form);
+      else await api.post("/clients", form);
       setOpen(false); load();
     } catch (e: unknown) { setError(e instanceof Error ? e.message : "Erro"); }
   };

@@ -59,10 +59,10 @@ export default function DiarioBordo() {
   useEffect(() => {
     setLoading(true);
     Promise.all([
-      api.get<Truck[]>("/trucks/"),
-      api.get<Employee[]>("/employees/"),
-      api.get<Client[]>("/clients/"),
-      api.get<Supplier[]>("/suppliers/"),
+      api.get<Truck[]>("/trucks"),
+      api.get<Employee[]>("/employees"),
+      api.get<Client[]>("/clients"),
+      api.get<Supplier[]>("/suppliers"),
     ]).then(([t, e, c, s]) => {
       setTrucks(t); setAllEmps(e);
       setDrivers(e.filter((x) => x.type === "driver"));
@@ -74,8 +74,8 @@ export default function DiarioBordo() {
   function loadDay(d: string) {
     setLoading(true);
     Promise.all([
-      api.get<Route[]>(`/routes/?date_from=${d}&date_to=${d}`),
-      api.get<FuelRecord[]>(`/fuel/?date_from=${d}&date_to=${d}`),
+      api.get<Route[]>(`/routes?date_from=${d}&date_to=${d}`),
+      api.get<FuelRecord[]>(`/fuel?date_from=${d}&date_to=${d}`),
     ]).then(([r, f]) => { setRoutes(r); setFuelRecs(f); })
     .catch((e) => setMsg({ ok: false, text: e.message }))
     .finally(() => setLoading(false));
@@ -116,11 +116,11 @@ export default function DiarioBordo() {
           .filter((o) => o.description && o.amount)
           .map((o) => ({ description: o.description, amount: +o.amount, category: "outros" }));
       }
-      await api.post("/routes/", routeData);
+      await api.post("/routes", routeData);
 
       // 2) Abastecimento (se preencheu)
       if (fuelLiters && parseFloat(fuelLiters) > 0) {
-        await api.post("/fuel/", {
+        await api.post("/fuel", {
           date, truck_id: +truckId, liters: +fuelLiters,
           price_per_liter: +fuelPrice || 0, total: fuelTotal,
           supplier_id: fuelSupplier ? +fuelSupplier : null,
@@ -129,7 +129,7 @@ export default function DiarioBordo() {
 
       // 3) Manutenção (se preencheu)
       if (maintDesc && maintCost) {
-        await api.post("/maintenance/", {
+        await api.post("/maintenance", {
           date, truck_id: +truckId, type: maintType,
           description: maintDesc, cost: +maintCost,
         });

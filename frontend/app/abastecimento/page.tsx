@@ -48,7 +48,7 @@ export default function Abastecimento() {
     };
     try {
       if (editing) await api.put(`/fuel/${editing.id}`, body);
-      else await api.post("/fuel/", body);
+      else await api.post("/fuel", body);
       setOpen(false); load();
     } catch (e: unknown) { setError(e instanceof Error ? e.message : "Erro"); }
   };

@@ -62,7 +62,7 @@ export default function Manutencao() {
     };
     try {
       if (editing) await api.put(`/maintenance/${editing.id}`, body);
-      else await api.post("/maintenance/", body);
+      else await api.post("/maintenance", body);
       setOpen(false); load();
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Erro";

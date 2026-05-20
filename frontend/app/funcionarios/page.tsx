@@ -32,7 +32,7 @@ export default function Funcionarios() {
     const body = { ...form, salary: form.salary ? +form.salary : 0, daily_rate: form.daily_rate ? +form.daily_rate : 0, active: form.active === "true", cnh_expiry: form.cnh_expiry || undefined };
     try {
       if (editing) await api.put(`/employees/${editing.id}`, body);
-      else await api.post("/employees/", body);
+      else await api.post("/employees", body);
       setOpen(false); load();
     } catch (e: unknown) { setError(e instanceof Error ? e.message : "Erro"); }
   };

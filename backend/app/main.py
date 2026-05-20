@@ -6,7 +6,7 @@ from app.database import engine, Base
 import app.models  # noqa: F401 — garante que todos os models são registrados
 from app.routers import trucks, employees, clients, suppliers, routes, fuel, maintenance, dashboard, company
 
-app = FastAPI(title="7Ouro Logistics API", version="1.0.0")
+app = FastAPI(title="7Ouro Logistics API", version="1.0.0", redirect_slashes=False)
 
 app.add_middleware(
     CORSMiddleware,
@@ -15,6 +15,14 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.middleware("http")
+async def add_no_cache_header(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):

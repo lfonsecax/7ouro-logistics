@@ -83,7 +83,7 @@ export default function Rotas() {
     };
     try {
       if (editing) await api.put(`/routes/${editing.id}`, body);
-      else await api.post("/routes/", body);
+      else await api.post("/routes", body);
       setOpen(false); load();
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Erro";

@@ -36,7 +36,7 @@ export default function Caminhoes() {
     const body = { ...form, year: form.year ? +form.year : undefined, capacity_kg: form.capacity_kg ? +form.capacity_kg : undefined, odometer: form.odometer ? +form.odometer : undefined };
     try {
       if (editing) await api.put(`/trucks/${editing.id}`, body);
-      else await api.post("/trucks/", body);
+      else await api.post("/trucks", body);
       setOpen(false); load();
     } catch (e: unknown) { setError(e instanceof Error ? e.message : "Erro"); }
   };
